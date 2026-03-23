@@ -1,3 +1,4 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+husky_sh="$(dirname -- "$0")/_/husky.sh"
+[ -f "$husky_sh" ] && . "$husky_sh"
 npx pretty-quick --staged

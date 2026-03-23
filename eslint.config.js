@@ -7,6 +7,7 @@ module.exports = [
   },
   ...tsPlugin.configs["flat/recommended"],
   {
+    files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       parser: tsParser,
     },

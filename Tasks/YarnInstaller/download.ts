@@ -15,7 +15,9 @@ function httpsGet(url: string): PromiseLike<IncomingMessage> {
     process.env.http_proxy;
 
   if (proxy !== null && proxy !== undefined) {
-    options.agent = new HttpsProxyAgent(proxy) as unknown as https.Agent;
+    options.agent = new HttpsProxyAgent(
+      proxy
+    ) as unknown as https.RequestOptions["agent"];
   }
 
   https
@@ -34,15 +36,17 @@ export async function downloadFrom(
   logRedirect?: (location: string) => void
 ): Promise<IncomingMessage> {
   let response = await httpsGet(url);
+  let statusCode = response.statusCode ?? 0;
   while (
-    (response.statusCode >= 301 && response.statusCode <= 303) ||
-    response.statusCode == 307
+    (statusCode >= 301 && statusCode <= 303) ||
+    statusCode == 307
   ) {
     const location = response.headers["location"] as string;
     if (logRedirect) {
       logRedirect(location);
     }
     response = await httpsGet(location);
+    statusCode = response.statusCode ?? 0;
   }
 
   return response;
