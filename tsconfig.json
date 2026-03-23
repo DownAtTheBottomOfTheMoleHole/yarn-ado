@@ -5,10 +5,13 @@
         "noImplicitAny": true,
         "removeComments": true,
         "preserveConstEnums": true,
-        "target": "es6",
+        "target": "ES2024",
+        "lib": ["ES2024"],
         "sourceMap": false,
         "inlineSourceMap": true,
-        "declaration": true
+        "declaration": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true
     }
    
 }

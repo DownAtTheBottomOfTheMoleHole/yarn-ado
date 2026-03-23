@@ -340,7 +340,7 @@ azure-devops-node-api@^8.1.1:
   resolved "https://www.myget.org/F/gl-unstable/npm/azure-devops-node-api/-/azure-devops-node-api-8.1.1.tgz#fb24d783e0ea0e11bb00ce29d0d32b9d58caa6a8"
   dependencies:
     tunnel "0.0.4"
-    typed-rest-client "1.2.0"
+    typed-rest-client "^2.1.0"
     underscore "1.8.3"
 
 backo2@1.0.2:
@@ -3643,12 +3643,16 @@ type-is@~1.6.16:
     media-typer "0.3.0"
     mime-types "~2.1.18"
 
-typed-rest-client@1.2.0:
-  version "1.2.0"
-  resolved "https://www.myget.org/F/gl-unstable/npm/typed-rest-client/-/typed-rest-client-1.2.0.tgz#723085d203f38d7d147271e5ed3a75488eb44a02"
+typed-rest-client@^2.1.0, typed-rest-client@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.npmjs.org/typed-rest-client/-/typed-rest-client-2.2.0.tgz"
+  integrity sha512-/e2Rk9g20N0r44kaQLb3v6QGuryOD8SPb53t43Y5kqXXA+SqWuU7zLiMxetw61jNn/JFrxTdr5nPDhGY/eTNhQ==
   dependencies:
-    tunnel "0.0.4"
-    underscore "1.8.3"
+    qs "^6.14.1"
+    des.js "^1.1.0"
+    js-md4 "^0.3.2"
+    tunnel "0.0.6"
+    underscore "^1.12.1"
 
 typescript@^3.5.1:
   version "3.5.1"
