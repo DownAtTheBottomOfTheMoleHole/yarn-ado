@@ -1,10 +1,10 @@
-import fs = require("fs-extra");
+import * as fs from "fs-extra";
 import * as tl from "azure-pipelines-task-lib/task";
 import * as path from "path";
 import * as toolLib from "azure-pipelines-tool-lib/tool";
 import { downloadFile, getTempPath, detar } from "./util";
 
-let yarnVersionsFile = path.join(getTempPath(), "yarnVersions.json");
+const yarnVersionsFile = path.join(getTempPath(), "yarnVersions.json");
 
 async function queryLatestMatch(
   versionSpec: string,
@@ -14,7 +14,7 @@ async function queryLatestMatch(
     "https://publicblobs.geeklearning.io/yarn/tarballsV2.json",
     yarnVersionsFile
   );
-  let yarnVersions = JSON.parse(
+  const yarnVersions = JSON.parse(
     fs.readFileSync(yarnVersionsFile, { encoding: "utf8" })
   ) as { [key: string]: { uri: string; isPrerelease: boolean } };
   let versionsCodes = Object.keys(yarnVersions);
@@ -22,7 +22,7 @@ async function queryLatestMatch(
     versionsCodes = versionsCodes.filter(v => !yarnVersions[v].isPrerelease);
   }
 
-  let version: string = toolLib.evaluateVersions(versionsCodes, versionSpec);
+  const version: string = toolLib.evaluateVersions(versionsCodes, versionSpec);
 
   if (!version) {
     return undefined;
@@ -35,15 +35,15 @@ async function downloadYarn(version: {
   version: string;
   url: string;
 }): Promise<string> {
-  let cleanVersion = toolLib.cleanVersion(version.version);
+  const cleanVersion = toolLib.cleanVersion(version.version);
 
-  let downloadPath: string = path.join(
+  const downloadPath: string = path.join(
     getTempPath(),
     `yarn-${cleanVersion}.tar.gz`
   );
   await downloadFile(version.url, downloadPath);
 
-  let detarLocation = path.join(getTempPath(), "yarn-output");
+  const detarLocation = path.join(getTempPath(), "yarn-output");
   fs.emptyDirSync(detarLocation);
   await detar(downloadPath, detarLocation);
 
@@ -98,7 +98,7 @@ async function getYarn(
   // layouts could change by version, by platform etc... but that's the tool installers job
   //
 
-  let matches = tl.findMatch(toolPath, ["**/bin/yarn.cmd"]);
+  const matches = tl.findMatch(toolPath, ["**/bin/yarn.cmd"]);
 
   if (matches.length) {
     toolPath = path.dirname(matches[0]);
@@ -115,9 +115,9 @@ async function getYarn(
 
 async function run(): Promise<void> {
   try {
-    let versionSpec = tl.getInput("versionSpec", true);
-    let checkLatest: boolean = tl.getBoolInput("checkLatest", false);
-    let includePrerelease: boolean = tl.getBoolInput(
+    const versionSpec = tl.getInput("versionSpec", true);
+    const checkLatest: boolean = tl.getBoolInput("checkLatest", false);
+    const includePrerelease: boolean = tl.getBoolInput(
       "includePrerelease",
       false
     );

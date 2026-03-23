@@ -9,16 +9,16 @@
     "doc": "docs"
   },
   "scripts": {
-    "clean": "vsts-build-tools-clean",
+    "clean": "node ./node_modules/gl-vsts-tasks-build-scripts/run/vsts-build-tools-clean",
     "prepare": "husky",
-    "postinstall": "vsts-build-tools-install",
-    "prebuild": "vsts-build-tools-prebuild",
+    "postinstall": "node ./node_modules/gl-vsts-tasks-build-scripts/run/vsts-build-tools-install",
+    "prebuild": "node ./node_modules/gl-vsts-tasks-build-scripts/run/vsts-build-tools-prebuild",
     "build": "tsc",
-    "package": "vsts-build-tools-package",
+    "package": "node ./node_modules/gl-vsts-tasks-build-scripts/run/vsts-build-tools-package",
     "test": "run-s build test:no-build",
     "test:no-build": "node test.js",
     "fix:prettier": "prettier Tasks/**/*.ts --write",
-    "lint": "eslint Tasks/**/*.ts"
+    "lint": "eslint --no-warn-ignored Tasks/**/*.ts"
   },
   "repository": {
     "type": "git",

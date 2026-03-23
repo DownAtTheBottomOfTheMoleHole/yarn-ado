@@ -1,5 +1,5 @@
-import fs = require("fs");
-import q = require("q");
+import * as fs from "fs";
+import * as q from "q";
 import * as tl from "azure-pipelines-task-lib/task";
 import * as path from "path";
 import { IncomingMessage } from "http";
@@ -31,11 +31,11 @@ export async function downloadFile(url: string, dest: string): Promise<void> {
 }
 
 export function getTempPath(): string {
-  let tempNpmrcDir =
+  const tempNpmrcDir =
     tl.getVariable("Agent.BuildDirectory") ||
     tl.getVariable("Agent.ReleaseDirectory") ||
     process.cwd();
-  let tempPath = path.join(tempNpmrcDir, "yarn");
+  const tempPath = path.join(tempNpmrcDir, "yarn");
   if (tl.exist(tempPath) === false) {
     tl.mkdirP(tempPath);
   }

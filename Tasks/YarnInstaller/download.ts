@@ -1,6 +1,6 @@
 import * as https from "https";
 import { HttpsProxyAgent } from "https-proxy-agent";
-import q = require("q");
+import * as q from "q";
 import { IncomingMessage } from "http";
 
 function httpsGet(url: string): PromiseLike<IncomingMessage> {
@@ -8,7 +8,7 @@ function httpsGet(url: string): PromiseLike<IncomingMessage> {
 
   const options: https.RequestOptions = {};
 
-  var proxy = // Azure DevOps transforms all variables to uppercase
+  const proxy = // Azure DevOps transforms all variables to uppercase
     process.env.HTTPS_PROXY ||
     process.env.https_proxy ||
     process.env.HTTP_PROXY ||
@@ -39,7 +39,9 @@ export async function downloadFrom(
     response.statusCode == 307
   ) {
     const location = response.headers["location"] as string;
-    logRedirect && logRedirect(location);
+    if (logRedirect) {
+      logRedirect(location);
+    }
     response = await httpsGet(location);
   }
 
