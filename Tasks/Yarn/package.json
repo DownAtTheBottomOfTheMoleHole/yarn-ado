@@ -3,13 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "dependencies": {
-    "azure-devops-node-api": "^14.0.0",
-    "azure-pipelines-task-lib": "^4.0.0",
-    "azure-pipelines-tool-lib": "^2.0.0",
-    "fs-extra": "^11.0.0",
-    "ini": "^5.0.0",
-    "ip-address": "^10.0.0",
-    "ltx": "^3.1.0",
-    "typed-rest-client": "^2.1.0"
+    "azure-devops-node-api": "^15.1.2",
+    "azure-pipelines-task-lib": "^5.2.8",
+    "azure-pipelines-tool-lib": "^2.0.12",
+    "fs-extra": "^11.3.4",
+    "ini": "^6.0.0",
+    "ip-address": "^10.1.0",
+    "ltx": "^3.1.2",
+    "typed-rest-client": "^2.2.0"
   }
 }

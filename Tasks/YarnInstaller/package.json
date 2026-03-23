@@ -3,11 +3,11 @@
   "private": true,
   "version": "0.1.0",
   "dependencies": {
-    "azure-pipelines-task-lib": "^4.0.0",
-    "azure-pipelines-tool-lib": "^2.0.0",
-    "fs-extra": "^11.0.0",
-    "https-proxy-agent": "^7.0.0",
-    "ini": "^5.0.0",
-    "tar": "^7.0.0"
+    "azure-pipelines-task-lib": "^5.2.8",
+    "azure-pipelines-tool-lib": "^2.0.12",
+    "fs-extra": "^11.3.4",
+    "https-proxy-agent": "^8.0.0",
+    "ini": "^6.0.0",
+    "tar": "^7.5.13"
   }
 }
