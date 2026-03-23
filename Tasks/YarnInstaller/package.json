@@ -6,8 +6,9 @@
     "azure-pipelines-task-lib": "^5.2.8",
     "azure-pipelines-tool-lib": "^2.0.12",
     "fs-extra": "^11.3.4",
-    "https-proxy-agent": "^8.0.0",
+    "https-proxy-agent": "^5.0.1",
     "ini": "^6.0.0",
+    "q": "^1.5.1",
     "tar": "^7.5.13"
   }
 }

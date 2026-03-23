@@ -1,5 +1,5 @@
 import * as https from "https";
-import * as HttpsProxyAgent from "https-proxy-agent";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import q = require("q");
 import { IncomingMessage } from "http";
 
@@ -15,7 +15,7 @@ function httpsGet(url: string): PromiseLike<IncomingMessage> {
     process.env.http_proxy;
 
   if (proxy !== null && proxy !== undefined) {
-    options.agent = new HttpsProxyAgent(proxy);
+    options.agent = new HttpsProxyAgent(proxy) as unknown as https.Agent;
   }
 
   https
