@@ -6,9 +6,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24-green)](https://nodejs.org/)
 
-Azure DevOps extension for installing Yarn Classic and running Yarn commands in build and release pipelines.
+Azure DevOps extension for Yarn Classic and modern Yarn 2+ workflows in Azure Pipelines.
 
-> This repository is maintained as a hard fork of the original Geek Learning extension and is being prepared as the initial independent `yarn-ado` release.
+> This fork exists to keep Yarn usable in modern Azure DevOps pipelines for both Yarn Classic and Yarn 2+ and later workflows.
 
 ![Yarn Task Configuration](Extension/Screenshots/Configure-Yarn.png)
 
@@ -36,6 +36,11 @@ steps:
 
 If your repo uses Corepack or Yarn Berry, provision Yarn separately and then run `Yarn@1` without using `YarnInstaller`.
 
+For Yarn 2+ and later, the intended model is:
+
+1. Enable Corepack or bootstrap the required Yarn version in your pipeline.
+2. Use `Yarn@1` as the execution task for install, build, test, and publish steps.
+
 ## Visual Configuration
 
 Configure the tasks with the Azure DevOps task assistant:
@@ -55,6 +60,7 @@ Registry and authentication options are available directly in the task UI:
 
 ## Compatibility
 
+- This fork supports both Yarn Classic and modern Yarn 2+ and later usage patterns in Azure DevOps.
 - `YarnInstaller` currently targets official Yarn Classic releases from `yarnpkg/yarn`.
 - `Yarn@1` executes whatever `yarn` binary is available on the agent, including one provisioned separately by Corepack or a custom bootstrap step.
 - `YarnInstaller` depends on newer agent features and is not intended for TFS 2015.
