@@ -1,7 +1,7 @@
 {
   "name": "yarn-ado",
-  "version": "0.1.0",
-  "description": "Community-maintained Yarn task extension for Azure DevOps Pipelines",
+  "version": "1.0.0",
+  "description": "Azure DevOps extension for installing Yarn Classic and running Yarn commands in pipelines",
   "engines": {
     "node": ">=24.0.0"
   },
