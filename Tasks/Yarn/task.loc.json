@@ -11,9 +11,9 @@
     "Release"
   ],
   "version": {
-    "Major": 0,
+    "Major": 1,
     "Minor": 0,
-    "Patch": 1
+    "Patch": 0
   },
   "preview": true,
   "runsOn": [
@@ -106,11 +106,7 @@
     }
   ],
   "execution": {
-    "Node": {
-      "target": "yarnTask.js",
-      "argumentFormat": ""
-    },
-    "Node10": {
+    "Node20_1": {
       "target": "yarnTask.js",
       "argumentFormat": ""
     }
