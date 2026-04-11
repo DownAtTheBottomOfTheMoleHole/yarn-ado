@@ -5,16 +5,24 @@
   "description": "ms-resource:loc.description",
   "helpMarkDown": "ms-resource:loc.helpMarkDown",
   "category": "Utility",
-  "author": "Geek Learning",
-  "visibility": ["Build", "Release"],
+  "author": "DownAtTheBottomOfTheMoleHole",
+  "visibility": [
+    "Build",
+    "Release"
+  ],
   "version": {
     "Major": 0,
     "Minor": 0,
     "Patch": 1
   },
   "preview": true,
-  "runsOn": ["Agent", "DeploymentGroup"],
-  "demands": ["yarn"],
+  "runsOn": [
+    "Agent",
+    "DeploymentGroup"
+  ],
+  "demands": [
+    "yarn"
+  ],
   "minimumAgentVersion": "1.91.0",
   "instanceNameFormat": "ms-resource:loc.instanceNameFormat",
   "groups": [
@@ -59,7 +67,7 @@
       "groupName": "customRegistries",
       "name": "customRegistry",
       "label": "Registries to use",
-      "helpMarkDown": "You can either commit a .npmrc file to your source code repository and set its path here or select a registry from VSTS here.",
+      "helpMarkDown": "You can either commit a .npmrc file to your source repository and set its path here or select an Azure Artifacts feed here.",
       "type": "radio",
       "options": {
         "useNpmrc": "Registries in my .npmrc",
@@ -70,7 +78,7 @@
     {
       "groupName": "customRegistries",
       "name": "customFeed",
-      "label": "Use packages from this VSTS/TFS registry",
+      "label": "Use packages from this Azure Artifacts feed",
       "helpMarkDown": "Include the selected feed in the generated .npmrc.",
       "type": "pickList",
       "visibleRule": "customRegistry = useFeed",
