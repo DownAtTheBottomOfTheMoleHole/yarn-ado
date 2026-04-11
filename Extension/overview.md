@@ -6,7 +6,7 @@ This extension is maintained as an independent hard fork of the original Geek Le
 
 ## Included Tasks
 
-- **YarnInstaller**: installs official Yarn Classic releases on the agent
+- **YarnInstaller**: installs official Yarn Classic releases or activates Yarn 2+ through Corepack on the agent
 - **Yarn**: runs Yarn commands and supports authenticated registries
 
 ## Quick Start
@@ -24,9 +24,9 @@ steps:
       arguments: install --frozen-lockfile
 ```
 
-If your repository uses Corepack or Yarn Berry, install Yarn separately and then call `Yarn@1`.
+For Yarn 2+ and later, request the target version in `YarnInstaller@1` and the task will enable Corepack and activate that Yarn release for you.
 
-The intended approach for Yarn 2+ and later is to provision Yarn outside the task, then use `Yarn@1` as the pipeline execution wrapper.
+The intended approach for Yarn 2+ and later is to let `YarnInstaller@1` prepare the requested version, then use `Yarn@1` as the pipeline execution wrapper.
 
 ## Visual Configuration
 
