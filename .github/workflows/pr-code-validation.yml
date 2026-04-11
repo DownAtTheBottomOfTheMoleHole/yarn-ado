@@ -3,9 +3,7 @@ name: PR Code Validation and Publish Private Extension
 on:
   pull_request:
     branches:
-      - master
       - main
-      - dev
 
 permissions:
   contents: read
@@ -49,11 +47,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@bc6623af8fc07d5a8903052dd46da33403eec8e8
+        with:
+          versionSpec: 6.x
+          preferLatestVersion: true
+
+      - name: Determine Version for PR
+        uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8
+        with:
+          configFilePath: GitVersion.yml
+
       - name: Set package version
         run: |
           EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
-          MAJOR_MINOR=$(node -p "const [major, minor] = require('./package.json').version.split('.'); `${major}.${minor}`")
-          echo "PACKAGE_VERSION=${MAJOR_MINOR}.${EPOCH_MINUTES}" >> "$GITHUB_ENV"
+          echo "PACKAGE_VERSION=${GitVersion_Major}.${GitVersion_Minor}.${GitVersion_Patch}.${EPOCH_MINUTES}" >> "$GITHUB_ENV"
+          echo "Building PR version: ${GitVersion_Major}.${GitVersion_Minor}.${GitVersion_Patch}.${EPOCH_MINUTES}"
 
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
@@ -95,3 +104,4 @@ jobs:
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
             --share-with "$AZURE_DEVOPS_ORGS"
+
