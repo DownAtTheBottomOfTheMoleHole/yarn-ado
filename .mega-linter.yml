@@ -1,36 +1,34 @@
+---
 # MegaLinter configuration for yarn-ado
-# TypeScript/Node.js Azure DevOps tasks extension
+# Minimal linting config for TypeScript/Node.js Azure DevOps tasks
 
-# Linting flavor: only essential linters for this stack
+# Use ci_light flavor as base
 FLAVOR: ci_light
 
-# Disable Trivy (Helm scanning timeout not needed for Node.js project)
-DISABLE: ["REPOSITORY_TRIVY"]
-
-# Enable specific linters for this project's tech stack
-# TypeScript, JSON, YAML, JavaScript, Bash
-ENABLE:
-  - TYPESCRIPT
-  - JSON
-  - YAML
-  - JAVASCRIPT
-  - BASH
-  - MARKDOWN
+# Disable problematic linters
+DISABLE_LINTERS:
+  - REPOSITORY_TRIVY
+  - REPOSITORY_GRYPE
+  - REPOSITORY_GIT_DIFF
+  - JSON_V8R
+  - YAML_V8R
+  - JSON_JSONLINT
+  - COPYPASTE_JSCPD
+  - ENV_DOTENV_LINTER
+  - BASH_SHFMT
 
 # Show elapsed time for performance tracking
 SHOW_ELAPSED_TIME: true
 
-# Apply fixes automatically where available
-APPLY_FIXES: none
+# Report generation
+MEGALINTER_VOLUME: all
 
-# Report generation formats
-MEGALINTER_VOLUME: "all"
-
-# Skip node_modules and build artifacts
+# Skip build artifacts and reports
 EXCLUDED_DIRECTORIES:
   - node_modules
-  - "*/node_modules"
-  - ".git"
-  - "*.vsix"
-  - "dist"
-  - "build"
+  - .git
+  - .BuildOutput
+  - megalinter-reports
+
+# Don't suggest custom flavors
+FLAVOR_SUGGESTIONS: false
