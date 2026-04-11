@@ -1,44 +1,70 @@
-![Icon](https://github.com/geeklearningio/gl-vsts-tasks-yarn/blob/master/Extension/extension-icon.png)
+# yarn-ado
 
-# Yarn Build and Release Tasks
+> This repository is maintained as a hard fork of the original Geek Learning Yarn extension so it can continue evolving with current Azure DevOps and Node.js runtimes.
 
-![cistatus](https://geeklearning.visualstudio.com/_apis/public/build/definitions/f841b266-7595-4d01-9ee1-4864cf65aa73/77/badge)
+Run Yarn in Azure DevOps Pipelines with two tasks:
 
-[Yarn](https://yarnpkg.com/) is Facebook's npm alternative. It is the fast, reliable and secure dependency management. 
-This extension brings the power of Yarn to Visual Studio Team Services Build and Release Management. It enables using yarn with the official npm registry or any registry you like such as Myget or [Visual Studio Team Services Package Management](https://marketplace.visualstudio.com/items?itemName=ms.feed#).
+- `YarnInstaller`: download and cache a requested Yarn version on the agent
+- `Yarn`: execute Yarn commands with optional authenticated registry support
 
-![GeekLearning Loves Yarn](https://github.com/geeklearningio/gl-vsts-tasks-yarn/blob/master/Extension/Screenshots/GeekLearningLovesYarn.png)
+## Installation
 
-Why so much sudden love for Yarn ? You can find out [here](http://geeklearning.io/npm-install-drives-you-crazy-yarn-and-chill) 
+Install the extension from your Azure DevOps organization or from a packaged `.vsix`, then add the tasks to a pipeline.
 
+## Quick Start
 
-[Learn more](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki) about this extension on the wiki!
+```yaml
+steps:
+  - task: YarnInstaller@1
+    displayName: Use Yarn 4.x
+    inputs:
+      versionSpec: 4.x
 
-## Tasks included
+  - task: Yarn@1
+    displayName: Install dependencies
+    inputs:
+      arguments: install --frozen-lockfile
+```
 
-* **[Yarn installer](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/Yarn-Installer)**: Installs Yarn 
-* **[Yarn](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/Yarn)**: Execute Yarn
+## Included Tasks
 
-## To contribute
+| Task | Purpose |
+| --- | --- |
+| `YarnInstaller` | Installs a requested Yarn version and adds it to the PATH |
+| `Yarn` | Runs Yarn commands and can inject credentials for Azure Artifacts or external npm registries |
 
-1. Globally install typescript and tfx-cli (to package VSTS extensions): `npm install -g typescript tfx-cli`
-2. From the root of the repo run `npm install`. This will pull down the necessary modules for the different tasks and for the build tools.
-3. Run `npm run build` to compile the build tasks.
-4. Run `npm run package -- --version <version>` to create the .vsix extension packages (supports multiple environments) that includes the build tasks.
+## Registry Support
 
-## Known Issues
+The `Yarn` task supports two authentication models:
 
-Please refer to our [wiki page](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/Known-Issues)
+1. Use a checked-in `.npmrc` file from your repository.
+2. Select an Azure Artifacts feed or external npm service connection in the task UI.
 
-## Release Notes
+## Compatibility And Known Limitations
 
-Please refer to our [release page](https://github.com/geeklearningio/gl-vsts-tasks-yarn/releases)
+- `YarnInstaller` depends on newer agent capabilities and is not intended for very old on-prem Azure DevOps Server or TFS deployments.
+- The task surface is intentionally kept close to the original extension to preserve pipeline compatibility.
+- If you rely on marketplace publishing, extension identity values such as publisher and extension id still need to match your target marketplace account.
 
-## Contributors
+## Development
 
-This extension was created by [Geek Learning](http://geeklearning.io/), with help from the community.
-It also uses some foundation code from [Azure pipelines Tasks](https://github.com/Microsoft/azure-pipelines-tasks).
+```bash
+npm install
+npm run build
+npm test
+npm run package -- --version <version>
+```
 
-## Attributions
+The packaging flow generates development, preview, and production extension artifacts from the source files in `Tasks/` and `Extension/`.
 
-* [Yarn by Yarn](https://yarnpkg.com/)
+## Contributing
+
+See [Contributing.md](Contributing.md) for contribution and issue-reporting guidance.
+
+## Upstream Attribution
+
+This project started from [geeklearningio/gl-vsts-tasks-yarn](https://github.com/geeklearningio/gl-vsts-tasks-yarn) and is now maintained independently at [DownAtTheBottomOfTheMoleHole/yarn-ado](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado). It still benefits from ideas and code patterns originally derived from the Azure Pipelines task ecosystem.
+
+## License
+
+This repository remains available under the [MIT license](LICENSE.md).
