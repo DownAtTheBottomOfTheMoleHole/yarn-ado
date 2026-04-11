@@ -34,11 +34,26 @@ steps:
       arguments: install --frozen-lockfile
 ```
 
-If your repo uses Corepack or Yarn Berry, provision Yarn separately and then run `Yarn@1` without using `YarnInstaller`.
+Use the built-in installer for Yarn 2+ through Corepack:
 
-For Yarn 2+ and later, the intended model is:
+```yaml
+steps:
+  - task: YarnInstaller@1
+    displayName: Use Yarn 4.x
+    inputs:
+      versionSpec: 4.x
 
-1. Enable Corepack or bootstrap the required Yarn version in your pipeline.
+  - task: Yarn@1
+    displayName: Install dependencies
+    inputs:
+      arguments: install --immutable
+```
+
+For Yarn 2+ and later, the task enables Corepack and activates the requested Yarn version on your behalf.
+
+The intended model is:
+
+1. Ask `YarnInstaller@1` for the required Yarn 2+ version.
 2. Use `Yarn@1` as the execution task for install, build, test, and publish steps.
 
 ## Visual Configuration
@@ -55,13 +70,14 @@ Registry and authentication options are available directly in the task UI:
 
 | Task | Purpose |
 | --- | --- |
-| `YarnInstaller` | Installs official Yarn Classic releases and adds them to the agent PATH |
+| `YarnInstaller` | Installs official Yarn Classic releases or activates Yarn 2+ through Corepack and adds Yarn to the agent PATH |
 | `Yarn` | Runs Yarn commands and can inject credentials for Azure Artifacts or external npm registries |
 
 ## Compatibility
 
 - This fork supports both Yarn Classic and modern Yarn 2+ and later usage patterns in Azure DevOps.
-- `YarnInstaller` currently targets official Yarn Classic releases from `yarnpkg/yarn`.
+- `YarnInstaller` downloads official Yarn Classic releases from `yarnpkg/yarn` for 1.x requests.
+- `YarnInstaller` enables Corepack and activates the requested version for Yarn 2+ and later requests.
 - `Yarn@1` executes whatever `yarn` binary is available on the agent, including one provisioned separately by Corepack or a custom bootstrap step.
 - `YarnInstaller` depends on newer agent features and is not intended for TFS 2015.
 
