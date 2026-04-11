@@ -3,10 +3,13 @@
   "name": "YarnInstaller",
   "friendlyName": "Yarn Tool Installer",
   "description": "Installs a version of Yarn",
-  "helpMarkDown": "[More Information](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/Yarn) (Version #{Version}#)",
+  "helpMarkDown": "[Documentation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#quick-start) (Version #{Version}#)",
   "category": "Utility",
-  "visibility": ["Build", "Release"],
-  "author": "Geek Learning",
+  "visibility": [
+    "Build",
+    "Release"
+  ],
+  "author": "DownAtTheBottomOfTheMoleHole",
   "version": {
     "Major": 0,
     "Minor": 0,
@@ -14,7 +17,9 @@
   },
   "minimumAgentVersion": "2.117.0",
   "groups": [],
-  "satisfies": ["yarn"],
+  "satisfies": [
+    "yarn"
+  ],
   "instanceNameFormat": "Use Yarn $(versionSpec)",
   "inputs": [
     {
