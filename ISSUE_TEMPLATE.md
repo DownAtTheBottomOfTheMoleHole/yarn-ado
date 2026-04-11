@@ -1,46 +1,52 @@
-Before opening an issue please [read this](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/How-to-Report-an-issue).
+# Issue Template
 
-# Are you reporting a bug or a feature request ?
-* [ ] Bug
-* [ ] Feature request
+Before opening an issue, review [Contributing.md](Contributing.md) and include a minimal reproduction.
 
-# Description
+## Request Type
 
-*Insert your description here*
+- [ ] Bug
+- [ ] Feature request
 
-# Expected behavior
+## Description
 
-*Describe the expected behavior*
+Describe the problem or requested capability.
 
-# Reproduction
+## Expected Behavior
 
-*Insert reproduction steps here*
+Describe what you expected to happen.
 
-```
+## Reproduction
+
+List the smallest possible steps to reproduce the issue.
+
+```text
 MANDATORY FOR BUGS: Insert debug trace
 ```
 
-*In order to allow us to quickly reproduce you issue please include a link to a reproduction repository*
+Include a link to a minimal reproduction repository when possible.
 
-# System information
+## System Information
 
-**VSTS or TFS:**
-* [ ] VSTS
-* [ ] TFS
+**Azure DevOps Services or Server:**
+
+- [ ] Azure DevOps Services
+- [ ] Azure DevOps Server / TFS
 
 **Agent:**
-* [ ] Hosted
-* [ ] Custom
+
+- [ ] Hosted
+- [ ] Custom
 
 **OS:**
-* [ ] Windows
-* [ ] Mac
-* [ ] Linux
+
+- [ ] Windows
+- [ ] Mac
+- [ ] Linux
 
 **Yarn version:**
-*Yarn version**
+
+Insert version here.
 
 **Node version:**
-*Node version**
 
-
+Insert version here.
