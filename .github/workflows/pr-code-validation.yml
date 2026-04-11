@@ -1,0 +1,97 @@
+name: PR Code Validation and Publish Private Extension
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+      - dev
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: 24.x
+          check-latest: true
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+  publish-private-extension:
+    name: Publish Private Extension
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+
+      - name: Set package version
+        run: |
+          EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
+          MAJOR_MINOR=$(node -p "const [major, minor] = require('./package.json').version.split('.'); `${major}.${minor}`")
+          echo "PACKAGE_VERSION=${MAJOR_MINOR}.${EPOCH_MINUTES}" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
+        with:
+          node-version: 24.x
+          check-latest: true
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Package extension
+        run: npm run package -- --version "$PACKAGE_VERSION"
+
+      - name: Install tfx-cli
+        run: npm install -g tfx-cli
+
+      - name: Locate VSIX
+        run: |
+          VSIX_PATH=$(find .BuildOutput/production -maxdepth 1 -name '*.vsix' | head -n 1)
+          if [[ -z "$VSIX_PATH" ]]; then
+            echo "No VSIX was generated."
+            exit 1
+          fi
+          echo "VSIX_PATH=$VSIX_PATH" >> "$GITHUB_ENV"
+
+      - name: Publish private extension
+        env:
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+          AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
+        run: |
+          if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
+            echo "Required publish secrets are not configured. Skipping private extension publish."
+            exit 0
+          fi
+
+          tfx extension publish \
+            --vsix "$VSIX_PATH" \
+            --override '{"public": false}' \
+            --service-url https://marketplace.visualstudio.com \
+            --token "$AZURE_DEVOPS_EXT_PAT" \
+            --share-with "$AZURE_DEVOPS_ORGS"
