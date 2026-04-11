@@ -1,5 +1,11 @@
-This is an open source project and as such relies on contributors effort on their spare time. 
+# Contributing
 
-Before reporting a bug please [read this](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/How-to-Report-an-issue).
+This repository is maintained as a community hard fork of the original Yarn Azure DevOps extension.
 
-If you consider making a pull request to add a feature, please open an issue first so we can discuss it before.
+Before opening an issue or pull request:
+
+1. Confirm the problem still reproduces on the current branch.
+2. Include the task version, agent OS, Yarn version, Node.js version, and a minimal pipeline sample.
+3. For registry-related failures, redact secrets but include the relevant `.npmrc` and task input shape.
+
+If you want to add a feature or change task behavior, open an issue first so the compatibility impact can be discussed before code is written.
