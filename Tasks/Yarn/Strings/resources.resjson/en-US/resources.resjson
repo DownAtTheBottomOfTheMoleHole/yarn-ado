@@ -1,6 +1,6 @@
 {
   "loc.friendlyName": "Yarn task",
-  "loc.helpMarkDown": "[More Information](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/Yarn) (Version #{Version}#).\n\nDear Angular and Ember CLI users, please check our [known issues](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/Known-Issues)",
+  "loc.helpMarkDown": "[Documentation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#quick-start) (Version #{Version}#).\n\nCompatibility notes and known limitations are documented in the repository README.",
   "loc.description": "Executes Yarn",
   "loc.instanceNameFormat": "Yarn $(Arguments)",
   "loc.messages.FoundBuildCredentials": "Found build credentials",
