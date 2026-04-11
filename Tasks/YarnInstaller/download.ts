@@ -3,7 +3,10 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import * as q from "q";
 import { IncomingMessage } from "http";
 
-function httpsGet(url: string): PromiseLike<IncomingMessage> {
+function httpsGet(
+  url: string,
+  headers?: Record<string, string>,
+): PromiseLike<IncomingMessage> {
   const deferal = q.defer<IncomingMessage>();
 
   const options: https.RequestOptions = {};
@@ -16,9 +19,15 @@ function httpsGet(url: string): PromiseLike<IncomingMessage> {
 
   if (proxy !== null && proxy !== undefined) {
     options.agent = new HttpsProxyAgent(
-      proxy
+      proxy,
     ) as unknown as https.RequestOptions["agent"];
   }
+
+  options.headers = {
+    accept: "application/octet-stream, application/json",
+    "user-agent": "yarn-ado",
+    ...headers,
+  };
 
   https
     .get(url, options, (response: IncomingMessage) => {
@@ -33,19 +42,17 @@ function httpsGet(url: string): PromiseLike<IncomingMessage> {
 
 export async function downloadFrom(
   url: string,
-  logRedirect?: (location: string) => void
+  logRedirect?: (location: string) => void,
+  headers?: Record<string, string>,
 ): Promise<IncomingMessage> {
-  let response = await httpsGet(url);
+  let response = await httpsGet(url, headers);
   let statusCode = response.statusCode ?? 0;
-  while (
-    (statusCode >= 301 && statusCode <= 303) ||
-    statusCode == 307
-  ) {
+  while ((statusCode >= 301 && statusCode <= 303) || statusCode == 307) {
     const location = response.headers["location"] as string;
     if (logRedirect) {
       logRedirect(location);
     }
-    response = await httpsGet(location);
+    response = await httpsGet(location, headers);
     statusCode = response.statusCode ?? 0;
   }
 
