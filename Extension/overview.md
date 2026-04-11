@@ -1,39 +1,45 @@
-# Yarn Build and Release Tasks
+# yarn-ado
 
-[Yarn](https://yarnpkg.com/) is Facebook's npm alternative. It is the fast, reliable and secure dependency management. 
-This extension brings the power of Yarn to Visual Studio Team Services Build and Release Management. It enables using yarn with the official npm registry or any registry you like such as Myget or [Visual Studio Team Services Package Management](https://marketplace.visualstudio.com/items?itemName=ms.feed#).
+This extension is maintained as a hard fork of the original Geek Learning Yarn tasks so they remain usable on current Azure DevOps agents and modern Node.js runtimes.
 
-![GeekLearning Loves Yarn](Screenshots/GeekLearningLovesYarn.png)
+## Included Tasks
 
-Why so much sudden love for Yarn ? You can find out [here](http://geeklearning.io/npm-install-drives-you-crazy-yarn-and-chill) 
+- **YarnInstaller**: installs a requested Yarn version on the agent
+- **Yarn**: runs Yarn commands and supports authenticated registries
 
-[Learn more](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki) about this extension on the wiki!
+## Quick Start
 
-## Tasks included
+Add the tasks to any Azure Pipelines YAML or classic pipeline:
 
-* **[Yarn installer](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/Yarn-Installer)**: Installs Yarn 
-* **[Yarn](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/Yarn)**: Execute Yarn
+```yaml
+steps:
+  - task: YarnInstaller@1
+    displayName: Use Yarn 4.x
+    inputs:
+      versionSpec: 4.x
 
-> Note that Yarn installer uses new agents features hence TFS 2015 is not supported.
+  - task: Yarn@1
+    displayName: Install dependencies
+    inputs:
+      arguments: install --frozen-lockfile
+```
 
-## Steps
-
-After installing the extension, you can add one (or more) of the tasks to a new or existing [build definition](https://www.visualstudio.com/en-us/docs/build/define/create) or [release definition](https://www.visualstudio.com/en-us/docs/release/author-release-definition/more-release-definition)
+## Visual Configuration
 
 ![add-task](Screenshots/Add-Tasks.png)
 
-Starting with version `1.x`, you can configure custom registries directly in the task settings:
+You can also configure authenticated feeds and `.npmrc`-based registries directly in the task settings.
 
 ![Custom Registries](Screenshots/Custom-Registries.png)
 
-## Learn more
+## Compatibility
 
-The [source](https://github.com/geeklearningio/gl-vsts-tasks-yarn) for this extension is on GitHub. Take, fork, and extend.
+- `YarnInstaller` requires newer agent features and is not intended for TFS 2015.
+- The task contract is intentionally kept close to the original extension to reduce migration risk for existing pipelines.
 
-## Known Issues
+## Resources
 
-Please refer to our [wiki page on Github](https://github.com/geeklearningio/gl-vsts-tasks-yarn/wiki/Known-Issues)
-
-## Release Notes
-
-Please refer to our [release page on Github](https://github.com/geeklearningio/gl-vsts-tasks-yarn/releases)
+- [Repository](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado)
+- [Issues](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/issues)
+- [Releases](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/releases)
+- [Root documentation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#readme)
