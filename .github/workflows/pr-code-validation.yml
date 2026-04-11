@@ -104,4 +104,3 @@ jobs:
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
             --share-with "$AZURE_DEVOPS_ORGS"
-
