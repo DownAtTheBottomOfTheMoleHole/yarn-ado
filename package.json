@@ -1,7 +1,7 @@
 {
-  "name": "gl-vsts-tasks-yarn",
+  "name": "yarn-ado",
   "version": "0.1.0",
-  "description": "Yarn task for the Team Services build system",
+  "description": "Community-maintained Yarn task extension for Azure DevOps Pipelines",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/geeklearningio/gl-vsts-tasks-yarn"
+    "url": "https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado"
   },
   "keywords": [
     "yarn",
@@ -30,14 +30,16 @@
     "node.js",
     "npm",
     "npm.js",
-    "install"
+    "install",
+    "azure-devops",
+    "azure-pipelines"
   ],
-  "author": "Geek Learning, Adrien Siffermann, Cyprien Autexier",
+  "author": "DownAtTheBottomOfTheMoleHole",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/geeklearningio/gl-vsts-tasks-yarn/issues"
+    "url": "https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/issues"
   },
-  "homepage": "https://github.com/geeklearningio/gl-vsts-tasks-yarn/vsts-tasks",
+  "homepage": "https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#readme",
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/ini": "^4.1.1",
