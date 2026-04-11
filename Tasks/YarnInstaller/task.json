@@ -2,8 +2,8 @@
   "id": "57066373-3f34-492b-941a-d66dd6b079c4",
   "name": "YarnInstaller",
   "friendlyName": "Yarn Tool Installer",
-  "description": "Installs a version of Yarn",
-  "helpMarkDown": "[Documentation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#quick-start) (Version #{Version}#)",
+  "description": "Installs a version of Yarn Classic",
+  "helpMarkDown": "[Documentation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#quick-start) (Version #{Version}#).\n\nThis installer targets official Yarn Classic releases. Use Corepack or your own bootstrap step for Yarn Berry.",
   "category": "Utility",
   "visibility": [
     "Build",
@@ -11,7 +11,7 @@
   ],
   "author": "DownAtTheBottomOfTheMoleHole",
   "version": {
-    "Major": 0,
+    "Major": 1,
     "Minor": 0,
     "Patch": 0
   },
@@ -28,7 +28,7 @@
       "label": "Version of Yarn to install",
       "defaultValue": "1.x",
       "required": true,
-      "helpMarkDown": "A version or version range that specifies the Yarn version to make available on the path. Use x as a wildcard. See the [list of available Yarn versions](https://github.com/yarnpkg/yarn/releases)."
+      "helpMarkDown": "A version or version range that specifies the Yarn Classic version to make available on the path. Use x as a wildcard. See the [list of available Yarn Classic releases](https://github.com/yarnpkg/yarn/releases)."
     },
     {
       "name": "checkLatest",
