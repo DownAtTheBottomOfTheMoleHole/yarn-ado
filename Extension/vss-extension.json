@@ -3,18 +3,18 @@
     "id": "yarn-ado",
     "name": "Yarn ADO",
     "version": "0.0.0",
-    "publisher": "DownAtTheBottomOfTheMoleHole",    
+    "publisher": "DownAtTheBottomOfTheMoleHole",
     "targets": [
         {
             "id": "Microsoft.VisualStudio.Services"
         }
-    ],    
+    ],
     "description": "Community-maintained Yarn tasks for Azure DevOps Pipelines",
     "categories": [
         "Azure Pipelines"
     ],
     "icons": {
-        "default": "extension-icon.png"        
+        "default": "extension-icon.png"
     },
     "tags": [
         "yarn",
@@ -53,7 +53,7 @@
     "branding": {
         "color": "rgb(32, 68, 134)",
         "theme": "dark"
-    },  
+    },
     "files": [
         {
             "path": "Tasks"
@@ -63,7 +63,7 @@
             "addressable": true
         }
     ],
-    "repository" :{
+    "repository": {
         "type": "git",
         "uri": "https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado"
     }
