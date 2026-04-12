@@ -1,0 +1,172 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "addLabels": ["renovate", "bot", "centralised"],
+  "azure-pipelines": {
+    "enabled": true,
+    "managerFilePatterns": ["/\\.ya?ml$/"]
+  },
+  "cloneSubmodules": true,
+  "commitBodyTable": true,
+  "configMigration": true,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Track Terraform git module SHA pins annotated with pinDigest comments",
+      "managerFilePatterns": ["/(^|/)modules\\.tf$/"],
+      "matchStrings": [
+        "source\\s*=\\s*\"git::https://github\\.com/(?<depName>[^\\\"?]+)\\.git\\?ref=(?<currentDigest>[a-f0-9]{40})\"\\s*#\\s*pinDigest=(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "semver",
+      "autoReplaceStringTemplate": "source = \"git::https://github.com/{{{depName}}}.git?ref={{{newDigest}}}\" # pinDigest={{{newValue}}}"
+    }
+  ],
+  "extends": ["config:recommended"],
+  "gitAuthor": "DATBOTMH Renovate <renovate@DATBOTMH.com>",
+  "packageRules": [
+    {
+      "enabled": false,
+      "extractVersion": "^(?<version>\\d+)",
+      "matchDatasources": ["azure-pipelines-tasks"]
+    },
+    {
+      "addLabels": ["Semver Patch", "Documentation Required", "Bug"],
+      "automerge": true,
+      "automergeType": "pr",
+      "commitMessageExtra": "+semver: none",
+      "description": "Automatically merge patch versions",
+      "matchUpdateTypes": ["patch"]
+    },
+    {
+      "addLabels": ["Semver Minor", "Documentation Required", "Enhancement"],
+      "automerge": true,
+      "automergeType": "pr",
+      "commitMessageExtra": "+semver: none",
+      "description": "Automatically merge minor versions",
+      "matchUpdateTypes": ["minor"]
+    },
+    {
+      "addLabels": ["Semver Major", "Documentation Required"],
+      "automerge": false,
+      "automergeType": "pr",
+      "commitMessageExtra": "+semver: none",
+      "description": "Do not automatically merge major versions",
+      "matchUpdateTypes": ["major"]
+    },
+    {
+      "description": "Add package names to this array to exclude them from Renovate updates",
+      "matchPackageNames": []
+    },
+    {
+      "automerge": false,
+      "description": "Do not automatically merge minor versions for terraform",
+      "matchUpdateTypes": ["minor"],
+      "matchPackageNames": ["/^terraform$/"]
+    },
+    {
+      "description": "Add package names to this array to exclude them from Renovate updates",
+      "matchPackageNames": []
+    },
+    {
+      "addLabels": ["Azure Pipelines"],
+      "description": "Label Azure Pipelines related updates",
+      "matchPackageNames": ["/azure-pipelines/", "/Documentation Required/"]
+    },
+    {
+      "addLabels": ["GitHub Actions"],
+      "description": "Label GitHub Actions related updates",
+      "matchPackageNames": ["/actions/"]
+    },
+    {
+      "addLabels": ["Documentation"],
+      "description": "Label documentation related updates",
+      "matchPackageNames": ["/^docs/"]
+    },
+    {
+      "addLabels": ["Chore"],
+      "description": "Label chores like dependency pinning or digest updates",
+      "matchUpdateTypes": ["pin", "digest"]
+    },
+    {
+      "addLabels": ["Terraform"],
+      "description": "Label Terraform related updates",
+      "pinDigests": false,
+      "matchPackageNames": ["/terraform/"]
+    },
+    {
+      "addLabels": ["Bug"],
+      "description": "Label bug fix updates",
+      "matchPackageNames": ["/bugfix/"]
+    },
+    {
+      "addLabels": ["Hotfix"],
+      "description": "Label hotfix updates",
+      "matchPackageNames": ["/hotfix/"]
+    },
+    {
+      "addLabels": ["Refactor"],
+      "description": "Label refactor updates",
+      "matchPackageNames": ["/refactor/"]
+    },
+    {
+      "addLabels": ["Style"],
+      "description": "Label style and linting updates",
+      "matchPackageNames": ["/style/", "/lint/", "/mega-linter/"]
+    },
+    {
+      "groupName": "Non-Major CAG Dependencies",
+      "groupSlug": "cag-non-major",
+      "matchPackageNames": [
+        "/^https://github.com/constellationautomotivegroup/i"
+      ],
+      "matchUpdateTypes": ["minor", "patch"],
+      "pinDigests": true
+    },
+    {
+      "groupName": "Major CAG Dependencies",
+      "groupSlug": "cag-major",
+      "matchPackageNames": [
+        "/^https://github.com/constellationautomotivegroup/i"
+      ],
+      "matchUpdateTypes": ["major"],
+      "pinDigests": true
+    },
+    {
+      "addLabels": ["CAG GitHub"],
+      "automerge": true,
+      "automergeType": "pr",
+      "groupName": "CAG non-major Workflow Dependencies",
+      "groupSlug": "cag-workflows",
+      "matchFileNames": [
+        ".github/workflows/**",
+        "repo_template/.github/workflows/**"
+      ],
+      "matchPackageNames": [
+        "constellationautomotivegroup/cag_central_management"
+      ],
+      "matchUpdateTypes": ["digest", "minor", "patch"],
+      "pinDigests": true
+    },
+    {
+      "addLabels": ["CAG GitHub"],
+      "automerge": false,
+      "groupName": "CAG major Workflow Dependencies",
+      "groupSlug": "cag-workflows",
+      "matchFileNames": [
+        ".github/workflows/**",
+        "repo_template/.github/workflows/**"
+      ],
+      "matchPackageNames": [
+        "constellationautomotivegroup/cag_central_management"
+      ],
+      "matchUpdateTypes": ["major"],
+      "pinDigests": true
+    }
+  ],
+  "prCreation": "immediate",
+  "prHourlyLimit": 0,
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "timezone": "GB",
+  "useBaseBranchConfig": "merge"
+}
