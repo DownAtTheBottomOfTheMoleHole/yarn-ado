@@ -1,0 +1,291 @@
+name: Build and release extension
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  npm_cache: ${{ github.workspace }}/npm_cache
+
+jobs:
+  # Build, test and publish private extension job
+  build:
+    name: Build, Test and Publish Private Extension
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install GitVersion
+        if: ${{ !cancelled() }}
+        uses: gittools/actions/gitversion/setup@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
+        with:
+          versionSpec: "6.x"
+          preferLatestVersion: true
+
+      - name: Determine Version
+        if: ${{ !cancelled() }}
+        uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
+        with:
+          configFilePath: GitVersion.yml
+
+      - name: Set extension version
+        run: |
+          # Use epoch minutes for private extension builds to maintain monotonic increase
+          # and compatibility with PR builds (which also use epoch minutes).
+          # Both PR and main branch builds publish to the same PRIVATE_EXTENSIONID,
+          # so they must use the same versioning scheme to avoid conflicts.
+          EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
+          PRIVATE_EXT_VERSION="${GitVersion_MajorMinorPatch}.${EPOCH_MINUTES}"
+          echo "PRIVATE_EXTENSION_VERSION=$PRIVATE_EXT_VERSION" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${GitVersion_MajorMinorPatch}" >> "$GITHUB_ENV"
+          echo "Building private extension version: $PRIVATE_EXT_VERSION"
+
+      - name: Setup Node.js
+        if: ${{ !cancelled() }}
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: "24.x"
+          check-latest: true
+
+      - name: Install dependencies
+        if: ${{ !cancelled() }}
+        run: npm install
+
+      - name: Build
+        if: ${{ !cancelled() }}
+        run: npm run build
+
+      - name: Lint
+        if: ${{ !cancelled() }}
+        run: npm run lint
+
+      - name: Test
+        if: ${{ !cancelled() }}
+        run: npm run test:no-build
+
+      - name: Package extension
+        run: npm run package -- --version "$PRIVATE_EXTENSION_VERSION"
+
+      - name: Install tfx-cli
+        if: ${{ !cancelled() }}
+        run: npm install -g tfx-cli
+
+      - name: Locate VSIX
+        run: |
+          VSIX_PATH=$(find .BuildOutput/production -maxdepth 1 -name '*.vsix' | head -n 1)
+          if [[ -z "$VSIX_PATH" ]]; then
+            echo "No VSIX was generated."
+            exit 1
+          fi
+          echo "VSIX_PATH=$VSIX_PATH" >> "$GITHUB_ENV"
+
+      - name: Publish private extension
+        env:
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+          AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
+        run: |
+          if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
+            echo "Required publish secrets are not configured. Skipping private extension publish."
+            exit 0
+          fi
+          tfx extension publish \
+            --vsix "$VSIX_PATH" \
+            --override '{"public": false}' \
+            --service-url https://marketplace.visualstudio.com \
+            --token "$AZURE_DEVOPS_EXT_PAT" \
+            --share-with "$AZURE_DEVOPS_ORGS"
+
+  # MegaLinter scan job (runs in parallel with build)
+  scan:
+    name: MegaLinter Scan
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[MegaLinter]')"
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+
+      - name: MegaLinter
+        uses: oxsecurity/megalinter/flavors/ci_light@a7a0163b6c8ff7474a283d99a706e27483ddd80f # v7.10.0
+        env:
+          APPLY_FIXES: all
+          APPLY_FIXES_EVENT: all
+          APPLY_FIXES_MODE: pull_request
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pull Request with fixes
+        if: always()
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "[MegaLinter] Apply linter fixes"
+          title: "[MegaLinter] 🔧 Automated linter fixes"
+          body: |
+            ## Summary
+
+            This automated PR applies code style and linting fixes detected by MegaLinter.
+
+            ## Motivation / Context
+
+            MegaLinter detected issues that can be automatically fixed. This PR contains the applied fixes to maintain code quality and consistency.
+
+            ## Checklist
+
+            - [x] My code follows the style guidelines of this project
+            - [x] I have performed a self-review of my own code
+          branch: megalinter-fixes
+          delete-branch: true
+          labels: |
+            automated
+            linting
+            megalinter
+
+      - name: Publish MegaLinter reports
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        with:
+          name: megalinter-reports
+          path: ${{ github.workspace }}/megalinter-reports
+
+  # Public release job — gated on both build and scan
+  public_release:
+    name: Package and Publish Public Release
+    runs-on: ubuntu-latest
+    needs: [build, scan]
+    if: ${{ needs.build.result == 'success' && (needs.scan.result == 'success' || needs.scan.result == 'skipped') }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install GitVersion
+        if: ${{ !cancelled() }}
+        uses: gittools/actions/gitversion/setup@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
+        with:
+          versionSpec: "6.x"
+          preferLatestVersion: true
+
+      - name: Determine Version
+        if: ${{ !cancelled() }}
+        uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
+        with:
+          configFilePath: GitVersion.yml
+
+      - name: Export release version
+        run: |
+          echo "RELEASE_VERSION=${GitVersion_MajorMinorPatch}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v${GitVersion_MajorMinorPatch}" >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: "24.x"
+          check-latest: true
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Package extension
+        run: npm run package -- --version "$RELEASE_VERSION"
+
+      - name: Install tfx-cli
+        run: npm install -g tfx-cli
+
+      - name: Locate VSIX
+        run: |
+          VSIX_PATH=$(find .BuildOutput/production -maxdepth 1 -name '*.vsix' | head -n 1)
+          if [[ -z "$VSIX_PATH" ]]; then
+            echo "No VSIX was generated."
+            exit 1
+          fi
+          echo "VSIX_PATH=$VSIX_PATH" >> "$GITHUB_ENV"
+
+      - name: Publish public extension
+        env:
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+        run: |
+          if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
+            echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping Marketplace publish."
+            exit 0
+          fi
+          tfx extension publish \
+            --vsix "$VSIX_PATH" \
+            --override '{"public": true}' \
+            --service-url https://marketplace.visualstudio.com \
+            --token "$AZURE_DEVOPS_EXT_PAT"
+
+  # Tag and GitHub release job — runs after successful public release
+  new_release:
+    name: Create new tagged release
+    runs-on: ubuntu-latest
+    needs: public_release
+    if: ${{ needs.public_release.result == 'success' }}
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
+        with:
+          versionSpec: "6.x"
+          preferLatestVersion: true
+
+      - name: Determine Version
+        uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
+        with:
+          configFilePath: GitVersion.yml
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
+        with:
+          custom_tag: ${{ env.GitVersion_SemVer }}
+          create_annotated_tag: true
+          fetch_all_tags: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_prefix: "v"
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          echo "## What's New in ${{ steps.tag_version.outputs.new_tag }}" > release_notes.md
+          echo "" >> release_notes.md
+          echo "### 🚀 Yarn Azure DevOps Extension" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "This release provides the Yarn Classic and Yarn 2+ tasks for Azure DevOps pipelines." >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 📝 Changelog" >> release_notes.md
+          echo "${{ steps.tag_version.outputs.changelog }}" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "---" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.tag_version.outputs.previous_tag }}...${{ steps.tag_version.outputs.new_tag }}" >> release_notes.md
+
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
+        with:
+          allowUpdates: true
+          bodyFile: release_notes.md
+          generateReleaseNotes: false
+          makeLatest: true
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          tag: ${{ steps.tag_version.outputs.new_tag }}
