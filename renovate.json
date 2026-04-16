@@ -54,18 +54,10 @@
       "matchUpdateTypes": ["major"]
     },
     {
-      "description": "Add package names to this array to exclude them from Renovate updates",
-      "matchPackageNames": []
-    },
-    {
       "automerge": false,
       "description": "Do not automatically merge minor versions for terraform",
       "matchUpdateTypes": ["minor"],
       "matchPackageNames": ["/^terraform$/"]
-    },
-    {
-      "description": "Add package names to this array to exclude them from Renovate updates",
-      "matchPackageNames": []
     },
     {
       "addLabels": ["Azure Pipelines"],
