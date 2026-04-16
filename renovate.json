@@ -51,9 +51,24 @@
       ]
     },
     {
+<<<<<<< HEAD
       "addLabels": [
         "GitHub Actions"
       ],
+=======
+      "automerge": false,
+      "description": "Do not automatically merge minor versions for terraform",
+      "matchUpdateTypes": ["minor"],
+      "matchPackageNames": ["/^terraform$/"]
+    },
+    {
+      "addLabels": ["Azure Pipelines"],
+      "description": "Label Azure Pipelines related updates",
+      "matchPackageNames": ["/azure-pipelines/", "/Documentation Required/"]
+    },
+    {
+      "addLabels": ["GitHub Actions"],
+>>>>>>> e34205afd1897aa9ea0e03907bd4b9a25302cd8a
       "description": "Label GitHub Actions related updates",
       "matchManagers": [
         "github-actions"
