@@ -14,6 +14,7 @@ DISABLE_LINTERS:
   - YAML_V8R
   - JSON_JSONLINT
   - JSON_PRETTIER
+  - JSON_ESLINT_PLUGIN_JSONC # incompatible with ESLint flat config (eslint.config.js)
   - COPYPASTE_JSCPD
   - ENV_DOTENV_LINTER
   - BASH_SHFMT
