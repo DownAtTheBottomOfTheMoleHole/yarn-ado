@@ -44,7 +44,7 @@
       "label": "Include prereleases",
       "defaultValue": "false",
       "required": false,
-      "helpMarkDown": "If set, Yarn Classic prereleases will be included when resolving 1.x versions. We recommand you don't set this unless you need it and you have a more restrictive version pattern such as ex: 1.7.x. This parameter does not affect explicit version patterns such as 1.7.1, and Yarn 2+ requests should specify the desired prerelease directly in versionSpec."
+      "helpMarkDown": "If set, Yarn Classic prereleases will be included when resolving 1.x versions. We recommend you don't set this unless you need it and you have a more restrictive version pattern such as ex: 1.7.x. This parameter does not affect explicit version patterns such as 1.7.1, and Yarn 2+ requests should specify the desired prerelease directly in versionSpec."
     }
   ],
   "execution": {
