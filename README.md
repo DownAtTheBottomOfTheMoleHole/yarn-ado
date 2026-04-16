@@ -1,17 +1,40 @@
 # yarn-ado
 
-> This repository is maintained as a hard fork of the original Geek Learning Yarn extension so it can continue evolving with current Azure DevOps and Node.js runtimes.
+[![Visual Studio Marketplace](https://img.shields.io/badge/Marketplace-yarn--ado-blue?logo=azuredevops)](https://marketplace.visualstudio.com/items?itemName=DownAtTheBottomOfTheMoleHole.yarn-ado)
+[![PR Code Validation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/actions/workflows/pr-code-validation.yml/badge.svg)](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/actions/workflows/pr-code-validation.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24-green)](https://nodejs.org/)
 
-Run Yarn in Azure DevOps Pipelines with two tasks:
+Azure DevOps extension for Yarn Classic and modern Yarn 2+ workflows in Azure Pipelines.
 
-- `YarnInstaller`: download and cache a requested Yarn version on the agent
-- `Yarn`: execute Yarn commands with optional authenticated registry support
+> This fork exists to keep Yarn usable in modern Azure DevOps pipelines for both Yarn Classic and Yarn 2+ and later workflows.
+
+![Yarn Task Configuration](Extension/Screenshots/Configure-Yarn.png)
 
 ## Installation
 
-Install the extension from your Azure DevOps organization or from a packaged `.vsix`, then add the tasks to a pipeline.
+1. Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=DownAtTheBottomOfTheMoleHole.yarn-ado) once published, or upload a packaged `.vsix` to your Azure DevOps organization.
+2. Add either `YarnInstaller` or `Yarn` to a pipeline.
 
 ## Quick Start
+
+Use the built-in installer for Yarn Classic releases:
+
+```yaml
+steps:
+  - task: YarnInstaller@1
+    displayName: Use Yarn Classic 1.x
+    inputs:
+      versionSpec: 1.x
+
+  - task: Yarn@1
+    displayName: Install dependencies
+    inputs:
+      arguments: install --frozen-lockfile
+```
+
+Use the built-in installer for Yarn 2+ through Corepack:
 
 ```yaml
 steps:
@@ -23,28 +46,40 @@ steps:
   - task: Yarn@1
     displayName: Install dependencies
     inputs:
-      arguments: install --frozen-lockfile
+      arguments: install --immutable
 ```
+
+For Yarn 2+ and later, the task enables Corepack and activates the requested Yarn version on your behalf.
+
+The intended model is:
+
+1. Ask `YarnInstaller@1` for the required Yarn 2+ version.
+2. Use `Yarn@1` as the execution task for install, build, test, and publish steps.
+
+## Visual Configuration
+
+Configure the tasks with the Azure DevOps task assistant:
+
+![Add Task](Extension/Screenshots/Add-Tasks.png)
+
+Registry and authentication options are available directly in the task UI:
+
+![Custom Registries](Extension/Screenshots/Custom-Registries.png)
 
 ## Included Tasks
 
 | Task | Purpose |
 | --- | --- |
-| `YarnInstaller` | Installs a requested Yarn version and adds it to the PATH |
+| `YarnInstaller` | Installs official Yarn Classic releases or activates Yarn 2+ through Corepack and adds Yarn to the agent PATH |
 | `Yarn` | Runs Yarn commands and can inject credentials for Azure Artifacts or external npm registries |
 
-## Registry Support
+## Compatibility
 
-The `Yarn` task supports two authentication models:
-
-1. Use a checked-in `.npmrc` file from your repository.
-2. Select an Azure Artifacts feed or external npm service connection in the task UI.
-
-## Compatibility And Known Limitations
-
-- `YarnInstaller` depends on newer agent capabilities and is not intended for very old on-prem Azure DevOps Server or TFS deployments.
-- The task surface is intentionally kept close to the original extension to preserve pipeline compatibility.
-- If you rely on marketplace publishing, extension identity values such as publisher and extension id still need to match your target marketplace account.
+- This fork supports both Yarn Classic and modern Yarn 2+ and later usage patterns in Azure DevOps.
+- `YarnInstaller` downloads official Yarn Classic releases from `yarnpkg/yarn` for 1.x requests.
+- `YarnInstaller` enables Corepack and activates the requested version for Yarn 2+ and later requests.
+- `Yarn@1` executes whatever `yarn` binary is available on the agent, including one provisioned separately by Corepack or a custom bootstrap step.
+- `YarnInstaller` depends on newer agent features and is not intended for TFS 2015.
 
 ## Development
 
@@ -55,11 +90,28 @@ npm test
 npm run package -- --version <version>
 ```
 
-The packaging flow generates development, preview, and production extension artifacts from the source files in `Tasks/` and `Extension/`.
+The packaging flow generates development, preview, and production VSIX artifacts from the source files in `Tasks/` and `Extension/`.
+
+## CI/CD Workflows
+
+This repository includes GitHub Actions workflows inspired by `megalinter-ado`:
+
+1. PR validation and optional private extension publishing in [.github/workflows/pr-code-validation.yml](.github/workflows/pr-code-validation.yml)
+2. Public release packaging and publishing in [.github/workflows/build_and_release.yml](.github/workflows/build_and_release.yml)
+
+Versioning is handled with [GitVersion](docs/VERSIONING.md).
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting guidance.
 
 ## Contributing
 
 See [Contributing.md](Contributing.md) for contribution and issue-reporting guidance.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## Upstream Attribution
 

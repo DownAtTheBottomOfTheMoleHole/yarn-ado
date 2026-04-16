@@ -3,7 +3,7 @@
   "name": "Yarn",
   "friendlyName": "Yarn task",
   "description": "Executes Yarn",
-  "helpMarkDown": "[Documentation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#quick-start) (Version #{Version}#).\n\nCompatibility notes and known limitations are documented in the repository README.",
+  "helpMarkDown": "[Documentation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#quick-start) (Version #{Version}#).\n\nThis fork supports both Yarn Classic and modern Yarn 2+ workflows. Compatibility notes and installer limitations are documented in the repository README.",
   "category": "Utility",
   "author": "DownAtTheBottomOfTheMoleHole",
   "visibility": [
@@ -11,7 +11,7 @@
     "Release"
   ],
   "version": {
-    "Major": 0,
+    "Major": 1,
     "Minor": 0,
     "Patch": 0
   },

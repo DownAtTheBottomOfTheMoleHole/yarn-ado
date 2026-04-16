@@ -1,0 +1,35 @@
+---
+# MegaLinter configuration for yarn-ado
+# Minimal linting config for TypeScript/Node.js Azure DevOps tasks
+
+# Use ci_light flavor as base
+FLAVOR: ci_light
+
+# Disable problematic linters and strict formatters
+DISABLE_LINTERS:
+  - REPOSITORY_TRIVY
+  - REPOSITORY_GRYPE
+  - REPOSITORY_GIT_DIFF
+  - JSON_V8R
+  - YAML_V8R
+  - JSON_JSONLINT
+  - JSON_PRETTIER
+  - COPYPASTE_JSCPD
+  - ENV_DOTENV_LINTER
+  - BASH_SHFMT
+
+# Show elapsed time for performance tracking
+SHOW_ELAPSED_TIME: true
+
+# Report generation
+MEGALINTER_VOLUME: all
+
+# Skip build artifacts and reports
+EXCLUDED_DIRECTORIES:
+  - node_modules
+  - .git
+  - .BuildOutput
+  - megalinter-reports
+
+# Don't suggest custom flavors
+FLAVOR_SUGGESTIONS: false

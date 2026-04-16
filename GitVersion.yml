@@ -1,6 +1,156 @@
+assembly-informational-format: "{InformationalVersion}"
 mode: ContinuousDeployment
-branches: 
-  dev(elop)?(ment)?$:
-    tag: alpha
-  features?[/-]:
-    tag: alpha.{BranchName}
+tag-prefix: "[vV]?"
+next-version: 1.0.0
+major-version-bump-message: '(\+semver:\s?(breaking|major)|^BREAKING CHANGE:)'
+minor-version-bump-message: '(\+semver:\s?(feature|minor)|^feat:)'
+patch-version-bump-message: "^fix:"
+no-bump-message: '(\+semver:\s?(none|skip))'
+tag-pre-release-weight: 60000
+commit-message-incrementing: Enabled
+branches:
+  main:
+    regex: ^main$
+    increment: Patch
+    mode: ContinuousDeployment
+    track-merge-target: false
+    source-branches:
+      - develop
+      - dev
+      - release
+      - feature
+      - bug
+      - hotfix
+      - documentation
+    tracks-release-branches: false
+    is-release-branch: false
+    pre-release-weight: 55000
+  master:
+    regex: ^master$
+    increment: Patch
+    mode: ContinuousDeployment
+    track-merge-target: false
+    source-branches:
+      - develop
+      - dev
+      - release
+      - feature
+      - bug
+      - hotfix
+      - documentation
+    tracks-release-branches: false
+    is-release-branch: false
+    pre-release-weight: 55000
+  develop:
+    regex: ^develop$
+    increment: Minor
+    track-merge-target: true
+    source-branches: []
+    tracks-release-branches: true
+    is-release-branch: false
+    pre-release-weight: 0
+  dev:
+    regex: ^dev(elop)?(ment)?$
+    increment: Minor
+    track-merge-target: true
+    source-branches: []
+    tracks-release-branches: true
+    is-release-branch: false
+    pre-release-weight: 0
+  release:
+    regex: ^release[/-]
+    increment: None
+    track-merge-target: false
+    source-branches:
+      - develop
+      - dev
+      - main
+      - master
+      - release
+      - hotfix
+    tracks-release-branches: false
+    is-release-branch: true
+    pre-release-weight: 30000
+  feature:
+    regex: ^feature[/-]
+    increment: Minor
+    track-merge-target: false
+    source-branches:
+      - develop
+      - dev
+      - main
+      - master
+      - release
+      - feature
+      - bug
+      - hotfix
+    tracks-release-branches: false
+    is-release-branch: false
+    pre-release-weight: 30000
+  hotfix:
+    regex: ^(hotfix|fix)[/-]
+    increment: Patch
+    mode: ContinuousDeployment
+    track-merge-target: false
+    source-branches:
+      - develop
+      - dev
+      - main
+      - master
+      - release
+    tracks-release-branches: false
+    is-release-branch: false
+    pre-release-weight: 30000
+  bug:
+    regex: ^bug[/-]
+    increment: Patch
+    track-merge-target: false
+    source-branches:
+      - develop
+      - dev
+      - main
+      - master
+      - release
+    tracks-release-branches: false
+    is-release-branch: false
+    pre-release-weight: 55000
+  documentation:
+    regex: ^(docs|documentation)[/-]
+    increment: Patch
+    track-merge-target: false
+    source-branches:
+      - develop
+      - dev
+      - main
+      - master
+    tracks-release-branches: false
+    is-release-branch: false
+    pre-release-weight: 55000
+  renovate:
+    regex: ^renovate[/-]
+    increment: Inherit
+    track-merge-target: false
+    source-branches:
+      - main
+      - master
+    tracks-release-branches: false
+    is-release-branch: false
+    pre-release-weight: 55000
+  pull-request:
+    increment: Inherit
+    track-merge-target: false
+    source-branches:
+      - develop
+      - dev
+      - main
+      - master
+      - release
+      - feature
+      - bug
+      - hotfix
+      - documentation
+    tracks-release-branches: false
+    is-release-branch: false
+    pre-release-weight: 30000
+merge-message-formats: {}
+update-build-number: true

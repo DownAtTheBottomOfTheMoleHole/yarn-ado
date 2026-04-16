@@ -1,0 +1,88 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "addLabels": [
+    "renovate",
+    "bot"
+  ],
+  "cloneSubmodules": true,
+  "commitBodyTable": true,
+  "configMigration": true,
+  "extends": [
+    "config:recommended"
+  ],
+  "gitAuthor": "DATBOTMH Renovate <renovate@DATBOTMH.com>",
+  "packageRules": [
+    {
+      "addLabels": [
+        "Semver Patch",
+        "Bug"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "commitMessageExtra": "+semver: none",
+      "description": "Automatically merge patch versions",
+      "matchUpdateTypes": [
+        "patch"
+      ]
+    },
+    {
+      "addLabels": [
+        "Semver Minor",
+        "Enhancement"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "commitMessageExtra": "+semver: none",
+      "description": "Automatically merge minor versions",
+      "matchUpdateTypes": [
+        "minor"
+      ]
+    },
+    {
+      "addLabels": [
+        "Semver Major"
+      ],
+      "automerge": false,
+      "automergeType": "pr",
+      "commitMessageExtra": "+semver: none",
+      "description": "Do not automatically merge major versions",
+      "matchUpdateTypes": [
+        "major"
+      ]
+    },
+    {
+      "addLabels": ["GitHub Actions"],
+      "description": "Label GitHub Actions related updates",
+      "matchManagers": [
+        "github-actions"
+      ]
+    },
+    {
+      "addLabels": [
+        "Chore"
+      ],
+      "description": "Label chores like dependency pinning or digest updates",
+      "matchUpdateTypes": [
+        "pin",
+        "digest"
+      ]
+    },
+    {
+      "addLabels": [
+        "Style"
+      ],
+      "description": "Label style and linting updates",
+      "matchPackageNames": [
+        "/lint/",
+        "/mega-linter/",
+        "/prettier/"
+      ]
+    }
+  ],
+  "prCreation": "immediate",
+  "prHourlyLimit": 0,
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "timezone": "GB",
+  "useBaseBranchConfig": "merge"
+}
