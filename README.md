@@ -97,7 +97,7 @@ The packaging flow generates development, preview, and production VSIX artifacts
 This repository includes GitHub Actions workflows inspired by `megalinter-ado`:
 
 1. PR validation and optional private extension publishing in [.github/workflows/pr-code-validation.yml](.github/workflows/pr-code-validation.yml)
-2. Public release packaging and publishing in [.github/workflows/release.yml](.github/workflows/release.yml)
+2. Public release packaging and publishing in [.github/workflows/build_and_release.yml](.github/workflows/build_and_release.yml)
 
 Versioning is handled with [GitVersion](docs/VERSIONING.md).
 
