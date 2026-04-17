@@ -98,12 +98,14 @@ jobs:
             echo "Required publish secrets are not configured. Skipping private extension publish."
             exit 0
           fi
-          tfx extension publish \
+          if ! tfx extension publish \
             --vsix "$VSIX_PATH" \
             --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
-            --share-with "$AZURE_DEVOPS_ORGS"
+            --share-with "$AZURE_DEVOPS_ORGS"; then
+            echo "::warning::Private extension publish failed. Verify that the VS Marketplace publisher exists and the PAT has Marketplace (Publish) scope."
+          fi
 
   # MegaLinter scan job (runs in parallel with build)
   scan:
@@ -165,7 +167,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "[MegaLinter] Apply linter fixes"
-          title: "[MegaLinter] 🔧 Automated linter fixes"
+          title: "[MegaLinter] \U0001F527 Automated linter fixes"
           body: |
             ## Summary
 
@@ -262,11 +264,14 @@ jobs:
             echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping Marketplace publish."
             exit 0
           fi
-          tfx extension publish \
+          if ! tfx extension publish \
             --vsix "$VSIX_PATH" \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
-            --token "$AZURE_DEVOPS_EXT_PAT"
+            --token "$AZURE_DEVOPS_EXT_PAT"; then
+            echo "::warning::Public extension publish failed. Verify that the VS Marketplace publisher exists and the PAT has Marketplace (Publish) scope."
+            exit 1
+          fi
 
       - name: Install Extension to Azure DevOps Organizations
         env:
@@ -329,11 +334,11 @@ jobs:
         run: |
           echo "## What's New in ${{ steps.tag_version.outputs.new_tag }}" > release_notes.md
           echo "" >> release_notes.md
-          echo "### 🚀 Yarn Azure DevOps Extension" >> release_notes.md
+          echo "### \U0001F680 Yarn Azure DevOps Extension" >> release_notes.md
           echo "" >> release_notes.md
           echo "This release provides the Yarn Classic and Yarn 2+ tasks for Azure DevOps pipelines." >> release_notes.md
           echo "" >> release_notes.md
-          echo "### 📝 Changelog" >> release_notes.md
+          echo "### \U0001F4DD Changelog" >> release_notes.md
           echo "${{ steps.tag_version.outputs.changelog }}" >> release_notes.md
           echo "" >> release_notes.md
           echo "---" >> release_notes.md
