@@ -3,7 +3,7 @@
     "id": "yarn-ado",
     "name": "yarn-ado",
     "version": "0.0.0",
-    "publisher": "DownAtTheBottomOfTheMoleHole",
+    "publisher": "#{publisherId}#",
     "targets": [
         {
             "id": "Microsoft.VisualStudio.Services"
