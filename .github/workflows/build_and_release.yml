@@ -74,11 +74,9 @@ jobs:
         run: npm run test:no-build
 
       - name: Replace tokens in extension manifest
-        uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1.3
-        with:
-          files: "Extension/vss-extension.json"
-        env:
-          publisherId: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+        run: |
+          PUBLISHER_ID="${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}"
+          sed -i "s/#{publisherId}#/${PUBLISHER_ID}/g" Extension/vss-extension.json
 
       - name: Package extension
         run: npm run package -- --version "$PRIVATE_EXTENSION_VERSION" --noversiontransform
@@ -114,6 +112,7 @@ jobs:
           # Only the public flag needs overriding at publish time.
           if ! tfx extension publish \
             --vsix "$VSIX_PATH" \
+            --force \
             --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
@@ -256,11 +255,9 @@ jobs:
         run: npm install
 
       - name: Replace tokens in extension manifest
-        uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1.3
-        with:
-          files: "Extension/vss-extension.json"
-        env:
-          publisherId: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+        run: |
+          PUBLISHER_ID="${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}"
+          sed -i "s/#{publisherId}#/${PUBLISHER_ID}/g" Extension/vss-extension.json
 
       - name: Package extension
         run: npm run package -- --version "$RELEASE_VERSION" --noversiontransform
@@ -292,6 +289,7 @@ jobs:
           # Only the public flag needs overriding at publish time.
           if ! tfx extension publish \
             --vsix "$VSIX_PATH" \
+            --force \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT"; then
