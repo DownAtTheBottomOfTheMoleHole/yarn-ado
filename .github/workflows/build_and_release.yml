@@ -82,7 +82,11 @@ jobs:
 
       - name: Locate VSIX
         run: |
-          VSIX_PATH=$(find .BuildOutput/production -maxdepth 1 -name '*.vsix' | head -n 1)
+          # Use the dev environment VSIX for private publishing.
+          # npm run package creates per-environment VISXes from configuration.json;
+          # the dev build has the "-dev" extension-ID suffix and separate task GUIDs
+          # so it won't clash with the production (public) extension.
+          VSIX_PATH=$(find .BuildOutput/dev -maxdepth 1 -name '*.vsix' | head -n 1)
           if [[ -z "$VSIX_PATH" ]]; then
             echo "No VSIX was generated."
             exit 1
@@ -158,7 +162,7 @@ jobs:
             echo "token_available=true" >> $GITHUB_OUTPUT
           else
             echo "token_available=false" >> $GITHUB_OUTPUT
-            echo "⚠️ GITHUB_TOKEN not available. PR creation will be skipped."
+            echo "\u26a0\ufe0f GITHUB_TOKEN not available. PR creation will be skipped."
           fi
 
       - name: Create Pull Request with fixes
@@ -201,7 +205,7 @@ jobs:
           name: megalinter-reports
           path: ${{ github.workspace }}/megalinter-reports
 
-  # Public release job — gated on both build and scan
+  # Public release job \u2014 gated on both build and scan
   public_release:
     name: Package and Publish Public Release
     runs-on: ubuntu-latest
@@ -249,6 +253,8 @@ jobs:
 
       - name: Locate VSIX
         run: |
+          # Use the production environment VSIX for public publishing.
+          # This has no ID suffix and uses production task GUIDs from configuration.json.
           VSIX_PATH=$(find .BuildOutput/production -maxdepth 1 -name '*.vsix' | head -n 1)
           if [[ -z "$VSIX_PATH" ]]; then
             echo "No VSIX was generated."
@@ -294,7 +300,7 @@ jobs:
               --org "https://dev.azure.com/$org" || echo "Extension may already be installed in $org"
           done
 
-  # Tag and GitHub release job — runs after successful public release
+  # Tag and GitHub release job \u2014 runs after successful public release
   new_release:
     name: Create new tagged release
     runs-on: ubuntu-latest
