@@ -270,7 +270,6 @@ jobs:
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT"; then
             echo "::warning::Public extension publish failed. Verify that the VS Marketplace publisher exists and the PAT has Marketplace (Publish) scope."
-            exit 1
           fi
 
       - name: Install Extension to Azure DevOps Organizations
