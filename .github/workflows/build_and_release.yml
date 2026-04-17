@@ -73,6 +73,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test:no-build
 
+      - name: Replace tokens in extension manifest
+        uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1.3
+        with:
+          files: "Extension/vss-extension.json"
+        env:
+          publisherId: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+
       - name: Package extension
         run: npm run package -- --version "$PRIVATE_EXTENSION_VERSION" --noversiontransform
 
@@ -97,28 +104,17 @@ jobs:
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
-          PUBLISHERID: ${{ secrets.PUBLISHERID }}
-          PRIVATE_EXTENSIONID: ${{ secrets.PRIVATE_EXTENSIONID }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
             echo "Required publish secrets are not configured. Skipping private extension publish."
             exit 0
           fi
-          # Build the --override JSON, injecting publisher and extension ID from
-          # secrets so the VSIX identity matches the Marketplace publisher the PAT
-          # is authorised for (mirrors the megalinter-ado pattern).
-          OVERRIDE='{"public": false'
-          if [[ -n "$PUBLISHERID" ]]; then
-            OVERRIDE="$OVERRIDE, \"publisher\": \"$PUBLISHERID\""
-          fi
-          if [[ -n "$PRIVATE_EXTENSIONID" ]]; then
-            OVERRIDE="$OVERRIDE, \"id\": \"$PRIVATE_EXTENSIONID\""
-          fi
-          OVERRIDE="$OVERRIDE}"
-          echo "Publishing with override: $OVERRIDE"
+          # Publisher is already baked into the VSIX via replace-tokens.
+          # Extension ID is set by configuration.json (dev = "yarn-ado-dev").
+          # Only the public flag needs overriding at publish time.
           if ! tfx extension publish \
             --vsix "$VSIX_PATH" \
-            --override "$OVERRIDE" \
+            --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
             --share-with "$AZURE_DEVOPS_ORGS"; then
@@ -259,6 +255,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Replace tokens in extension manifest
+        uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1.3
+        with:
+          files: "Extension/vss-extension.json"
+        env:
+          publisherId: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+
       - name: Package extension
         run: npm run package -- --version "$RELEASE_VERSION" --noversiontransform
 
@@ -279,28 +282,17 @@ jobs:
       - name: Publish public extension
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
-          PUBLISHERID: ${{ secrets.PUBLISHERID }}
-          PUBLIC_EXTENSIONID: ${{ secrets.PUBLIC_EXTENSIONID }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
             echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping Marketplace publish."
             exit 0
           fi
-          # Override publisher and extension ID from secrets so the production
-          # VSIX publishes under the correct Marketplace identity (mirrors the
-          # megalinter-ado pattern).
-          OVERRIDE='{"public": true'
-          if [[ -n "$PUBLISHERID" ]]; then
-            OVERRIDE="$OVERRIDE, \"publisher\": \"$PUBLISHERID\""
-          fi
-          if [[ -n "$PUBLIC_EXTENSIONID" ]]; then
-            OVERRIDE="$OVERRIDE, \"id\": \"$PUBLIC_EXTENSIONID\""
-          fi
-          OVERRIDE="$OVERRIDE}"
-          echo "Publishing with override: $OVERRIDE"
+          # Publisher is already baked into the VSIX via replace-tokens.
+          # Extension ID is set by configuration.json (production = "yarn-ado").
+          # Only the public flag needs overriding at publish time.
           if ! tfx extension publish \
             --vsix "$VSIX_PATH" \
-            --override "$OVERRIDE" \
+            --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT"; then
             echo "::warning::Public extension publish failed. Verify that the VS Marketplace publisher exists and the PAT has Marketplace (Publish) scope."
