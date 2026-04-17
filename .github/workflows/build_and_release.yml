@@ -344,13 +344,27 @@ jobs:
 
       - name: Bump version and push tag
         id: tag_version
-        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
-        with:
-          custom_tag: ${{ env.GitVersion_SemVer }}
-          create_annotated_tag: true
-          fetch_all_tags: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag_prefix: "v"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_TAG="v${{ env.GitVersion_SemVer }}"
+          git fetch --tags --force
+          PREVIOUS_TAG=$(git tag --sort=-v:refname | head -n 1 || echo "")
+          CHANGELOG=""
+          if [ -n "$PREVIOUS_TAG" ]; then
+            CHANGELOG=$(git log "${PREVIOUS_TAG}..HEAD" --pretty=format:"* %s (%h)" 2>/dev/null || echo "")
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$NEW_TAG" -m "$NEW_TAG"
+          git push origin "$NEW_TAG"
+          echo "new_tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
+          echo "previous_tag=${PREVIOUS_TAG}" >> "$GITHUB_OUTPUT"
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Generate Release Notes
         id: release_notes
