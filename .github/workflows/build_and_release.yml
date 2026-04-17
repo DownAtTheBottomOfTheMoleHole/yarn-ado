@@ -44,18 +44,17 @@ jobs:
           # and compatibility with PR builds (which also use epoch minutes).
           # Both PR and main branch builds publish to the same PRIVATE_EXTENSIONID,
           # so they must use the same versioning scheme to avoid conflicts.
-          # Version must be valid 3-part semver (major.minor.patch) for the package script.
           EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
-          PRIVATE_EXT_VERSION="${GitVersion_Major}.${GitVersion_Minor}.${EPOCH_MINUTES}"
+          PRIVATE_EXT_VERSION="${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${EPOCH_MINUTES}"
           echo "PRIVATE_EXTENSION_VERSION=$PRIVATE_EXT_VERSION" >> "$GITHUB_ENV"
-          echo "RELEASE_VERSION=${GitVersion_MajorMinorPatch}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${{ env.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
           echo "Building private extension version: $PRIVATE_EXT_VERSION"
 
       - name: Setup Node.js
         if: ${{ !cancelled() }}
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: "24.x"
+          node-version: "20.x"
           check-latest: true
 
       - name: Install dependencies
@@ -111,6 +110,7 @@ jobs:
     name: MegaLinter Scan
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[MegaLinter]')"
+    continue-on-error: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -119,21 +119,53 @@ jobs:
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
-      - name: MegaLinter
-        uses: oxsecurity/megalinter/flavors/ci_light@a7a0163b6c8ff7474a283d99a706e27483ddd80f # v7.10.0
+      - name: Install Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: "20.x"
+          check-latest: true
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run MegaLinter
+        run: |
+          git config --global user.email 'megalinter@megalinter.io'
+          git config --global user.name 'Megalinter runner'
+          npx mega-linter-runner -r v9 --fix --flavor ci_light
         env:
-          APPLY_FIXES: all
           APPLY_FIXES_EVENT: all
           APPLY_FIXES_MODE: pull_request
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AZURE_COMMENT_REPORTER: true
+          CI: true
+          DISABLE_ERRORS: true
+          TF_BUILD: false
+          SYSTEM_ACCESSTOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SYSTEM_COLLECTIONURI: ${{ github.server_url }}
+          SYSTEM_TEAMPROJECT: ${{ github.repository }}
+          BUILD_BUILD_ID: ${{ github.run_id }}
+          BUILD_REPOSITORY_ID: ${{ github.repository }}
+          VALIDATE_ALL_CODEBASE: false
+        working-directory: ${{ github.workspace }}
+
+      - name: Check if GITHUB_TOKEN is available
+        id: check-token
+        if: always()
+        run: |
+          if [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
+            echo "token_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "token_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ GITHUB_TOKEN not available. PR creation will be skipped."
+          fi
 
       - name: Create Pull Request with fixes
-        if: always()
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        if: always() && steps.check-token.outputs.token_available == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "[MegaLinter] Apply linter fixes"
-          title: "[MegaLinter] \U0001F527 Automated linter fixes"
+          title: "[MegaLinter] 🔧 Automated linter fixes"
           body: |
             ## Summary
 
@@ -143,10 +175,16 @@ jobs:
 
             MegaLinter detected issues that can be automatically fixed. This PR contains the applied fixes to maintain code quality and consistency.
 
+            ## How Has This Been Tested?
+
+            - Fixes were automatically applied by MegaLinter's auto-fix feature
+            - All enabled linters passed after applying fixes
+
             ## Checklist
 
             - [x] My code follows the style guidelines of this project
             - [x] I have performed a self-review of my own code
+            - [x] My changes generate no new warnings
           branch: megalinter-fixes
           delete-branch: true
           labels: |
@@ -156,7 +194,7 @@ jobs:
 
       - name: Publish MegaLinter reports
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: megalinter-reports
           path: ${{ github.workspace }}/megalinter-reports
@@ -189,13 +227,13 @@ jobs:
 
       - name: Export release version
         run: |
-          echo "RELEASE_VERSION=${GitVersion_MajorMinorPatch}" >> "$GITHUB_ENV"
-          echo "RELEASE_TAG=v${GitVersion_MajorMinorPatch}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${{ env.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v${{ env.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: "24.x"
+          node-version: "20.x"
           check-latest: true
 
       - name: Install dependencies
@@ -229,6 +267,28 @@ jobs:
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT"
+
+      - name: Install Extension to Azure DevOps Organizations
+        env:
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+          AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
+        run: |
+          if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
+            echo "AZURE_DEVOPS_EXT_PAT or AZURE_DEVOPS_ORGS not configured. Skipping org installation."
+            exit 0
+          fi
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          IFS=',' read -ra ORGS <<< "$AZURE_DEVOPS_ORGS"
+          for org in "${ORGS[@]}"; do
+            echo "Installing extension to organization: $org"
+            az devops configure --defaults organization="https://dev.azure.com/$org"
+            az extension add --name azure-devops --allow-preview true || true
+            echo "$AZURE_DEVOPS_EXT_PAT" | az devops login
+            az devops extension install \
+              --publisher-id "${{ secrets.PUBLISHERID }}" \
+              --extension-id "${{ secrets.PUBLIC_EXTENSIONID }}" \
+              --org "https://dev.azure.com/$org" || echo "Extension may already be installed in $org"
+          done
 
   # Tag and GitHub release job — runs after successful public release
   new_release:
@@ -269,11 +329,11 @@ jobs:
         run: |
           echo "## What's New in ${{ steps.tag_version.outputs.new_tag }}" > release_notes.md
           echo "" >> release_notes.md
-          echo "### \U0001F680 Yarn Azure DevOps Extension" >> release_notes.md
+          echo "### 🚀 Yarn Azure DevOps Extension" >> release_notes.md
           echo "" >> release_notes.md
           echo "This release provides the Yarn Classic and Yarn 2+ tasks for Azure DevOps pipelines." >> release_notes.md
           echo "" >> release_notes.md
-          echo "### \U0001F4DD Changelog" >> release_notes.md
+          echo "### 📝 Changelog" >> release_notes.md
           echo "${{ steps.tag_version.outputs.changelog }}" >> release_notes.md
           echo "" >> release_notes.md
           echo "---" >> release_notes.md

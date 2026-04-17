@@ -1,9 +1,10 @@
 ---
 # MegaLinter configuration for yarn-ado
-# Minimal linting config for TypeScript/Node.js Azure DevOps tasks
+# Linting config for TypeScript/Node.js Azure DevOps tasks
 
-# Use ci_light flavor as base
-FLAVOR: ci_light
+# Auto-fix settings
+APPLY_FIXES: all
+CLEAR_REPORT_FOLDER: true
 
 # Disable problematic linters and strict formatters
 DISABLE_LINTERS:
@@ -23,7 +24,11 @@ DISABLE_LINTERS:
 SHOW_ELAPSED_TIME: true
 
 # Report generation
-MEGALINTER_VOLUME: all
+REPORT_OUTPUT_FOLDER: ./megalinter-reports
+UPDATED_SOURCES_REPORTER: true
+UPDATED_SOURCES_REPORTER_DIR: updated_sources
+CONFIG_REPORTER: true
+CONFIG_REPORTER_SUB_FOLDER: IDE-config
 
 # Skip build artifacts and reports
 EXCLUDED_DIRECTORIES:
@@ -32,5 +37,11 @@ EXCLUDED_DIRECTORIES:
   - .BuildOutput
   - megalinter-reports
 
-# Don't suggest custom flavors
+FILTER_REGEX_EXCLUDE: "(node_modules/|\\.git/|\\.BuildOutput/|megalinter-reports/)"
+IGNORE_GITIGNORED_FILES: true
+
+# Flavor and validation settings
+FAIL_IF_MISSING_LINTER_IN_FLAVOR: false
+FAIL_IF_UPDATED_SOURCES: false
 FLAVOR_SUGGESTIONS: false
+VALIDATE_ALL_CODEBASE: false

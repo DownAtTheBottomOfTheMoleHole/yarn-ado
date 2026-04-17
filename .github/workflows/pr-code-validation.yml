@@ -1,10 +1,11 @@
 name: PR Code Validation and Publish Private Extension
 
-# Trigger on pull requests to main branch
+# Trigger on pull requests to main and dev branches
 on:
   pull_request:
     branches:
       - main
+      - dev
 
 permissions:
   contents: read
@@ -28,7 +29,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: "24.x"
+          node-version: "20.x"
           check-latest: true
 
       - name: Install dependencies
@@ -74,17 +75,16 @@ jobs:
           # Use epoch minutes (minutes since 1970-01-01 UTC) as a monotonically increasing
           # build number that stays within TFX CLI's 0-2147483647 range per version component.
           # Current value is ~29.5 million, well under the ~2.1 billion max.
-          # Version must be valid 3-part semver (major.minor.patch) for the package script.
           # Note: Collision risk exists if multiple PR runs start within the same minute,
           # but this is extremely rare in practice. If a collision occurs, retry the workflow.
           EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
-          echo "PACKAGE_VERSION=${GitVersion_Major}.${GitVersion_Minor}.${EPOCH_MINUTES}" >> "$GITHUB_ENV"
-          echo "Building PR version: ${GitVersion_Major}.${GitVersion_Minor}.${EPOCH_MINUTES}"
+          echo "PACKAGE_VERSION=${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${EPOCH_MINUTES}" >> "$GITHUB_ENV"
+          echo "Building PR version: ${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${EPOCH_MINUTES}"
 
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version: "24.x"
+          node-version: "20.x"
           check-latest: true
 
       - name: Install dependencies
