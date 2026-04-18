@@ -109,13 +109,27 @@ jobs:
           fi
           # Publisher is already baked into the VSIX via replace-tokens.
           # Extension ID is set by configuration.json (dev = "yarn-ado-dev").
-          tfx extension publish \
+          set +e
+          PUBLISH_OUTPUT=$(tfx extension publish \
             --vsix "$VSIX_PATH" \
             --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
             --share-with "$AZURE_DEVOPS_ORGS" \
-            --no-wait-validation
+            --no-wait-validation 2>&1)
+          PUBLISH_EXIT=$?
+          set -e
+
+          echo "$PUBLISH_OUTPUT"
+
+          if [[ $PUBLISH_EXIT -ne 0 ]]; then
+            if echo "$PUBLISH_OUTPUT" | grep -qiE "Request timeout|timed out|ETIMEDOUT"; then
+              echo "Private extension publish timed out; continuing so public release can proceed."
+              exit 0
+            fi
+            echo "Private extension publish failed with a non-timeout error."
+            exit $PUBLISH_EXIT
+          fi
 
   # MegaLinter scan job (runs in parallel with build)
   scan:
