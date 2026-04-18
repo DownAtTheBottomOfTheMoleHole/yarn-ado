@@ -74,9 +74,21 @@ jobs:
         run: npm run test:no-build
 
       - name: Replace tokens in extension manifest
+        env:
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: yarn-ado
+          EXTENSION_NAME: yarn-ado
         run: |
-          PUBLISHER_ID="${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}"
-          sed -i "s/#{publisherId}#/${PUBLISHER_ID}/g" Extension/vss-extension.json
+          node -e '
+            const fs = require("fs");
+            const file = "Extension/vss-extension.json";
+            const m = JSON.parse(fs.readFileSync(file, "utf8"));
+            m.publisher = process.env.PUBLISHER_ID;
+            m.id = process.env.EXTENSION_ID;
+            m.name = process.env.EXTENSION_NAME;
+            m.version = process.env.PRIVATE_EXTENSION_VERSION;
+            fs.writeFileSync(file, JSON.stringify(m, null, 4) + "\n");
+          '
 
       - name: Package extension
         run: npm run package -- --version "$PRIVATE_EXTENSION_VERSION" --noversiontransform
@@ -266,9 +278,21 @@ jobs:
         run: npm install
 
       - name: Replace tokens in extension manifest
+        env:
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: yarn-ado
+          EXTENSION_NAME: yarn-ado
         run: |
-          PUBLISHER_ID="${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}"
-          sed -i "s/#{publisherId}#/${PUBLISHER_ID}/g" Extension/vss-extension.json
+          node -e '
+            const fs = require("fs");
+            const file = "Extension/vss-extension.json";
+            const m = JSON.parse(fs.readFileSync(file, "utf8"));
+            m.publisher = process.env.PUBLISHER_ID;
+            m.id = process.env.EXTENSION_ID;
+            m.name = process.env.EXTENSION_NAME;
+            m.version = process.env.RELEASE_VERSION;
+            fs.writeFileSync(file, JSON.stringify(m, null, 4) + "\n");
+          '
 
       - name: Package extension
         run: npm run package -- --version "$RELEASE_VERSION" --noversiontransform
