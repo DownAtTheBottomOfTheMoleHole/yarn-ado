@@ -90,6 +90,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Replace tokens in extension manifest
+        run: |
+          PUBLISHER_ID="${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}"
+          sed -i "s/#{publisherId}#/${PUBLISHER_ID}/g" Extension/vss-extension.json
+
       - name: Package extension
         run: npm run package -- --version "$PACKAGE_VERSION" --noversiontransform
 
@@ -98,7 +103,10 @@ jobs:
 
       - name: Locate VSIX
         run: |
-          VSIX_PATH=$(find .BuildOutput/production -maxdepth 1 -name '*.vsix' | head -n 1)
+          # Use the dev environment VSIX for private PR publishing.
+          # The dev build has the "-dev" extension-ID suffix and separate task GUIDs
+          # so it won't clash with the production (public) extension.
+          VSIX_PATH=$(find .BuildOutput/dev -maxdepth 1 -name '*.vsix' | head -n 1)
           if [[ -z "$VSIX_PATH" ]]; then
             echo "No VSIX was generated."
             exit 1
