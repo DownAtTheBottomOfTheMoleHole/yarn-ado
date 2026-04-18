@@ -112,7 +112,6 @@ jobs:
           # Only the public flag needs overriding at publish time.
           tfx extension publish \
             --vsix "$VSIX_PATH" \
-            --force \
             --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
@@ -287,7 +286,6 @@ jobs:
           # Only the public flag needs overriding at publish time.
           tfx extension publish \
             --vsix "$VSIX_PATH" \
-            --force \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT"
