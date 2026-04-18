@@ -109,12 +109,13 @@ jobs:
           fi
           # Publisher is already baked into the VSIX via replace-tokens.
           # Extension ID is set by configuration.json (dev = "yarn-ado-dev").
-          # Only the public flag needs overriding at publish time.
           tfx extension publish \
             --vsix "$VSIX_PATH" \
+            --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
-            --share-with "$AZURE_DEVOPS_ORGS"
+            --share-with "$AZURE_DEVOPS_ORGS" \
+            --no-wait-validation
 
   # MegaLinter scan job (runs in parallel with build)
   scan:
@@ -282,11 +283,12 @@ jobs:
           fi
           # Publisher is already baked into the VSIX via replace-tokens.
           # Extension ID is set by configuration.json (production = "yarn-ado").
-          # Only the public flag needs overriding at publish time.
           tfx extension publish \
             --vsix "$VSIX_PATH" \
             --override '{"public": true}' \
-            --token "$AZURE_DEVOPS_EXT_PAT"
+            --service-url https://marketplace.visualstudio.com \
+            --token "$AZURE_DEVOPS_EXT_PAT" \
+            --no-wait-validation
 
       - name: Install Extension to Azure DevOps Organizations
         env:
