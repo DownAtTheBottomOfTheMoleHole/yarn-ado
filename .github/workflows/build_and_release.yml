@@ -110,15 +110,13 @@ jobs:
           # Publisher is already baked into the VSIX via replace-tokens.
           # Extension ID is set by configuration.json (dev = "yarn-ado-dev").
           # Only the public flag needs overriding at publish time.
-          if ! tfx extension publish \
+          tfx extension publish \
             --vsix "$VSIX_PATH" \
             --force \
             --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
-            --share-with "$AZURE_DEVOPS_ORGS"; then
-            echo "::warning::Private extension publish failed. Verify that the VS Marketplace publisher exists and the PAT has Marketplace (Publish) scope."
-          fi
+            --share-with "$AZURE_DEVOPS_ORGS"
 
   # MegaLinter scan job (runs in parallel with build)
   scan:
@@ -287,14 +285,12 @@ jobs:
           # Publisher is already baked into the VSIX via replace-tokens.
           # Extension ID is set by configuration.json (production = "yarn-ado").
           # Only the public flag needs overriding at publish time.
-          if ! tfx extension publish \
+          tfx extension publish \
             --vsix "$VSIX_PATH" \
             --force \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
-            --token "$AZURE_DEVOPS_EXT_PAT"; then
-            echo "::warning::Public extension publish failed. Verify that the VS Marketplace publisher exists and the PAT has Marketplace (Publish) scope."
-          fi
+            --token "$AZURE_DEVOPS_EXT_PAT"
 
       - name: Install Extension to Azure DevOps Organizations
         env:
