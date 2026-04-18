@@ -90,21 +90,42 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Replace tokens in extension manifest
+      - name: Prepare extension and task manifests
         env:
           PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: yarn-ado
-          EXTENSION_NAME: yarn-ado
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
+          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
+          EXTENSION_AUTHOR: ${{ vars.EXTENSION_AUTHOR || secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          TASK_YARN_NAME: ${{ vars.TASK_YARN_NAME || 'Yarn' }}
+          TASK_YARN_INSTALLER_NAME: ${{ vars.TASK_YARN_INSTALLER_NAME || 'YarnInstaller' }}
+          MANIFEST_VERSION: ${{ env.PACKAGE_VERSION }}
         run: |
           node -e '
             const fs = require("fs");
-            const file = "Extension/vss-extension.json";
-            const m = JSON.parse(fs.readFileSync(file, "utf8"));
-            m.publisher = process.env.PUBLISHER_ID;
-            m.id = process.env.EXTENSION_ID;
-            m.name = process.env.EXTENSION_NAME;
-            m.version = process.env.PACKAGE_VERSION;
-            fs.writeFileSync(file, JSON.stringify(m, null, 4) + "\n");
+            const config = JSON.parse(fs.readFileSync("configuration.json", "utf8"));
+            const dev = config.environments.find((e) => e.Name === "dev");
+            if (!dev) throw new Error("dev environment not found in configuration.json");
+            const [major, minor, patch] = process.env.MANIFEST_VERSION.split(".").map((v) => Number.parseInt(v, 10));
+
+            const extensionFile = "Extension/vss-extension.json";
+            const extensionManifest = JSON.parse(fs.readFileSync(extensionFile, "utf8"));
+            extensionManifest.publisher = process.env.PUBLISHER_ID;
+            extensionManifest.id = process.env.EXTENSION_ID;
+            extensionManifest.name = process.env.EXTENSION_NAME;
+            extensionManifest.version = process.env.MANIFEST_VERSION;
+            fs.writeFileSync(extensionFile, JSON.stringify(extensionManifest, null, 4) + "\n");
+
+            const applyTaskManifest = (file, id, name) => {
+              const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+              manifest.id = id;
+              manifest.name = name;
+              manifest.author = process.env.EXTENSION_AUTHOR;
+              manifest.version = { Major: major, Minor: minor, Patch: patch };
+              fs.writeFileSync(file, JSON.stringify(manifest, null, 2) + "\n");
+            };
+
+            applyTaskManifest("Tasks/Yarn/task.json", dev.TaskIds.Yarn, process.env.TASK_YARN_NAME);
+            applyTaskManifest("Tasks/YarnInstaller/task.json", dev.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
           '
 
       - name: Package extension

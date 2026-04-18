@@ -1,8 +1,8 @@
 {
     "manifestVersion": 1,
-    "id": "yarn-ado",
-    "name": "yarn-ado",
-    "version": "0.0.0",
+    "id": "#{extensionId}#",
+    "name": "#{extensionName}#",
+    "version": "#{Version}#",
     "publisher": "#{publisherId}#",
     "targets": [
         {

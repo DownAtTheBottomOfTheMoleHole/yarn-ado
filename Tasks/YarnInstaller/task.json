@@ -1,6 +1,6 @@
 {
-  "id": "920f3027-2a07-4619-a8df-2ed5cc4eb791",
-  "name": "YarnInstaller",
+  "id": "#{taskYarnInstallerId}#",
+  "name": "#{taskYarnInstallerName}#",
   "friendlyName": "Yarn Tool Installer",
   "description": "Installs Yarn Classic directly or activates Yarn 2+ with Corepack",
   "helpMarkDown": "[Documentation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#quick-start) (Version #{Version}#).\n\nRequests for Yarn Classic use official releases from yarnpkg/yarn. Requests for Yarn 2+ and later are provisioned through Corepack on your behalf.",
@@ -9,11 +9,11 @@
     "Build",
     "Release"
   ],
-  "author": "DownAtTheBottomOfTheMoleHole",
+  "author": "#{author}#",
   "version": {
-    "Major": 1,
-    "Minor": 0,
-    "Patch": 0
+    "Major": "#{taskVersionMajor}#",
+    "Minor": "#{taskVersionMinor}#",
+    "Patch": "#{taskVersionPatch}#"
   },
   "minimumAgentVersion": "2.117.0",
   "groups": [],
