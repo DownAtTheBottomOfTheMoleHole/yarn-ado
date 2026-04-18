@@ -314,6 +314,10 @@ jobs:
               echo "Public extension publish timed out; continuing so release flow can proceed."
               exit 0
             fi
+            if echo "$PUBLISH_OUTPUT" | grep -qiE "The extension already exists"; then
+              echo "Public extension already exists; continuing release flow."
+              exit 0
+            fi
             echo "Public extension publish failed with a non-timeout error."
             exit $PUBLISH_EXIT
           fi
