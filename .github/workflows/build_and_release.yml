@@ -297,12 +297,26 @@ jobs:
           fi
           # Publisher is already baked into the VSIX via replace-tokens.
           # Extension ID is set by configuration.json (production = "yarn-ado").
-          tfx extension publish \
-            --manifest-globs Extension/vss-extension.json \
+          set +e
+          PUBLISH_OUTPUT=$(tfx extension publish \
+            --vsix "$VSIX_PATH" \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
-            --no-wait-validation
+            --no-wait-validation 2>&1)
+          PUBLISH_EXIT=$?
+          set -e
+
+          echo "$PUBLISH_OUTPUT"
+
+          if [[ $PUBLISH_EXIT -ne 0 ]]; then
+            if echo "$PUBLISH_OUTPUT" | grep -qiE "Request timeout|timed out|ETIMEDOUT"; then
+              echo "Public extension publish timed out; continuing so release flow can proceed."
+              exit 0
+            fi
+            echo "Public extension publish failed with a non-timeout error."
+            exit $PUBLISH_EXIT
+          fi
 
       - name: Install Extension to Azure DevOps Organizations
         env:
