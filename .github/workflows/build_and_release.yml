@@ -112,7 +112,6 @@ jobs:
           # Only the public flag needs overriding at publish time.
           tfx extension publish \
             --vsix "$VSIX_PATH" \
-            --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
             --share-with "$AZURE_DEVOPS_ORGS"
@@ -287,7 +286,6 @@ jobs:
           tfx extension publish \
             --vsix "$VSIX_PATH" \
             --override '{"public": true}' \
-            --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT"
 
       - name: Install Extension to Azure DevOps Organizations
