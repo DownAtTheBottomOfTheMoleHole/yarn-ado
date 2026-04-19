@@ -364,7 +364,7 @@ jobs:
           # Publisher is already baked into the VSIX via replace-tokens.
           # Extension ID is set by configuration.json (production = "yarn-ado").
           tfx extension publish \
-            --manifest-globs vss-extension.json \
+            --vsix "$VSIX_PATH" \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT"
