@@ -93,10 +93,9 @@ jobs:
             const extensionFile = "Extension/vss-extension.json";
             const extensionManifest = JSON.parse(fs.readFileSync(extensionFile, "utf8"));
             extensionManifest.publisher = process.env.PUBLISHER_ID;
-            extensionManifest.id = process.env.EXTENSION_ID + dev.VssExtensionIdSuffix;
-            extensionManifest.name = process.env.EXTENSION_NAME + dev.DisplayNamesSuffix;
+            extensionManifest.id = process.env.EXTENSION_ID;
+            extensionManifest.name = process.env.EXTENSION_NAME;
             extensionManifest.version = process.env.MANIFEST_VERSION;
-            extensionManifest.galleryFlags = dev.VssExtensionGalleryFlags;
             fs.writeFileSync(extensionFile, JSON.stringify(extensionManifest, null, 4) + "\n");
 
             const applyTaskManifest = (file, id, name) => {
@@ -319,10 +318,9 @@ jobs:
             const extensionFile = "Extension/vss-extension.json";
             const extensionManifest = JSON.parse(fs.readFileSync(extensionFile, "utf8"));
             extensionManifest.publisher = process.env.PUBLISHER_ID;
-            extensionManifest.id = process.env.EXTENSION_ID + prod.VssExtensionIdSuffix;
-            extensionManifest.name = process.env.EXTENSION_NAME + prod.DisplayNamesSuffix;
+            extensionManifest.id = process.env.EXTENSION_ID;
+            extensionManifest.name = process.env.EXTENSION_NAME;
             extensionManifest.version = process.env.MANIFEST_VERSION;
-            extensionManifest.galleryFlags = prod.VssExtensionGalleryFlags;
             fs.writeFileSync(extensionFile, JSON.stringify(extensionManifest, null, 4) + "\n");
 
             const applyTaskManifest = (file, id, name) => {
