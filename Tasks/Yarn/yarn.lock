@@ -45,6 +45,11 @@ agent-base@6:
   dependencies:
     debug "4"
 
+asap@^2.0.0:
+  version "2.0.6"
+  resolved "https://registry.npmjs.org/asap/-/asap-2.0.6.tgz"
+  integrity sha512-BSHWgDSAiKs50o2Re8ppvp3seVHXSRM44cdSsT9FfNEUUZLOGWVCsiWaRPWM1Znn+mqZ1OfVZ3z3DWEzSp7hRA==
+
 azure-devops-node-api@^15.1.2:
   version "15.1.2"
   resolved "https://www.myget.org/F/gl-unstable/npm/azure-devops-node-api/-/azure-devops-node-api-15.1.2.tgz"
@@ -457,10 +462,24 @@ picomatch@^2.3.1:
   resolved "https://www.myget.org/F/gl-unstable/npm/picomatch/-/picomatch-2.3.2.tgz"
   integrity sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA== sha1-WpQpFeJrNy3A8OZ1MUmhbmscVgE=
 
+pop-iterate@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.npmjs.org/pop-iterate/-/pop-iterate-1.0.1.tgz"
+  integrity sha512-HRCx4+KJE30JhX84wBN4+vja9bNfysxg1y28l0DuJmkoaICiv2ZSilKddbS48pq50P8d2erAhqDLbp47yv3MbQ==
+
 q@^1.5.1:
   version "1.5.1"
-  resolved "https://www.myget.org/F/gl-unstable/npm/q/-/q-1.5.1.tgz"
-  integrity sha1-fjL3W0E4EpHQRhHxvxQQmsAGUdc=
+  resolved "https://registry.npmjs.org/q/-/q-1.5.1.tgz"
+  integrity sha512-kV/CThkXo6xyFEZUugw/+pIOywXcDbFYgSct5cT3gqlbkBE1SJdwy6UQoZvodiWF/ckQLZyDE/Bu1M6gVu5lVw==
+
+q@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.npmjs.org/q/-/q-2.0.3.tgz"
+  integrity sha512-gv6vLGcmAOg96/fgo3d9tvA4dJNZL3fMyBqVRrGxQ+Q/o4k9QzbJ3NQF9cOO/71wRodoXhaPgphvMFU68qVAJQ==
+  dependencies:
+    asap "^2.0.0"
+    pop-iterate "^1.0.1"
+    weak-map "^1.0.5"
 
 qs@^6.10.3, qs@^6.14.1, qs@^6.9.1:
   version "6.15.0"
@@ -601,16 +620,16 @@ typed-rest-client@^1.8.6:
     tunnel "0.0.6"
     underscore "^1.12.1"
 
-typed-rest-client@^2.2.0:
-  version "2.2.0"
-  resolved "https://www.myget.org/F/gl-unstable/npm/typed-rest-client/-/typed-rest-client-2.2.0.tgz"
-  integrity sha512-/e2Rk9g20N0r44kaQLb3v6QGuryOD8SPb53t43Y5kqXXA+SqWuU7zLiMxetw61jNn/JFrxTdr5nPDhGY/eTNhQ== sha1-2gcn5AiEm9tpgg2G7mZK/KNHd6M=
+typed-rest-client@^2.3.0:
+  version "2.3.0"
+  resolved "https://registry.npmjs.org/typed-rest-client/-/typed-rest-client-2.3.0.tgz"
+  integrity sha512-FfBj5tjviexjIus3La4n4s9i+f81Zj7HU+lUlQWK219HMRfmzLsbIf4PZF2+X6EouJKyuANpvvef5VrUWM4AFw==
   dependencies:
     des.js "^1.1.0"
     js-md4 "^0.3.2"
     qs "^6.14.1"
     tunnel "0.0.6"
-    underscore "^1.12.1"
+    underscore "^1.13.8"
 
 typed-rest-client@2.1.0:
   version "2.1.0"
@@ -623,7 +642,7 @@ typed-rest-client@2.1.0:
     tunnel "0.0.6"
     underscore "^1.12.1"
 
-underscore@^1.12.1:
+underscore@^1.12.1, underscore@^1.13.8:
   version "1.13.8"
   resolved "https://www.myget.org/F/gl-unstable/npm/underscore/-/underscore-1.13.8.tgz"
   integrity sha512-DXtD3ZtEQzc7M8m4cXotyHR+FAS18C64asBYY5vqZexfYryNNnDc02W4hKg3rdQuqOYas1jkseX0+nZXjTXnvQ== sha1-qTohGGwEnb8OhHSW26cre9jB6Ss=
@@ -642,6 +661,11 @@ uuid@^3.0.1, uuid@^3.3.2:
   version "3.3.2"
   resolved "https://www.myget.org/F/gl-unstable/npm/uuid/-/uuid-3.3.2.tgz"
   integrity sha1-G0r0lV6zB3xQHCOHL8ZROBFYcTE=
+
+weak-map@^1.0.5:
+  version "1.0.8"
+  resolved "https://registry.npmjs.org/weak-map/-/weak-map-1.0.8.tgz"
+  integrity sha512-lNR9aAefbGPpHO7AEnY0hCFjz1eTkWCXYvkTRrTHs9qv8zJp+SkVYpzfLIFXQQiG3tVvbNFQgVg2bQS8YGgxyw==
 
 which@^2.0.1:
   version "2.0.2"
