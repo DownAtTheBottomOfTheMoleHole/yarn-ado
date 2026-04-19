@@ -185,8 +185,7 @@ jobs:
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
             --share-with "$AZURE_DEVOPS_ORGS" \
-            --no-wait-validation \
-            --force 2>&1)
+            --no-wait-validation 2>&1)
           PUBLISH_EXIT=$?
           set -e
 
@@ -439,8 +438,7 @@ jobs:
             --vsix "$VSIX_PATH" \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
-            --token "$AZURE_DEVOPS_EXT_PAT" \
-            --force
+            --token "$AZURE_DEVOPS_EXT_PAT"
 
       - name: Install Extension to Azure DevOps Organizations
         env:
