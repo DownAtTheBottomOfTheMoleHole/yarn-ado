@@ -76,8 +76,8 @@ jobs:
       - name: Prepare extension and task manifests
         env:
           PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops-private' }}
-          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || secrets.PRIVATE_EXTENSIONID || secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops-private' }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
+          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
           EXTENSION_AUTHOR: ${{ vars.EXTENSION_AUTHOR || secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
           TASK_YARN_NAME: ${{ vars.TASK_YARN_NAME || 'Yarn' }}
           TASK_YARN_INSTALLER_NAME: ${{ vars.TASK_YARN_INSTALLER_NAME || 'YarnInstaller' }}
@@ -121,7 +121,7 @@ jobs:
       - name: Show effective dev extension identity
         env:
           PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops-private' }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
         run: |
           echo "Publisher: ${PUBLISHER_ID}"
           echo "Base extension id: ${EXTENSION_ID}"
@@ -137,7 +137,7 @@ jobs:
       - name: Probe marketplace state for dev extension
         env:
           PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops-private' }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
