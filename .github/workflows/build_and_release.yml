@@ -311,8 +311,8 @@ jobs:
           node -e '
             const fs = require("fs");
             const config = JSON.parse(fs.readFileSync("configuration.json", "utf8"));
-            const dev = config.environments.find((e) => e.Name === "dev");
-            if (!dev) throw new Error("dev environment not found in configuration.json");
+            const prod = config.environments.find((e) => e.Name === "production");
+            if (!prod) throw new Error("production environment not found in configuration.json");
             const [major, minor, patch] = process.env.MANIFEST_VERSION.split(".").map((v) => Number.parseInt(v, 10));
 
             const extensionFile = "Extension/vss-extension.json";
@@ -332,8 +332,8 @@ jobs:
               fs.writeFileSync(file, JSON.stringify(manifest, null, 2) + "\n");
             };
 
-            applyTaskManifest("Tasks/Yarn/task.json", dev.TaskIds.Yarn, process.env.TASK_YARN_NAME);
-            applyTaskManifest("Tasks/YarnInstaller/task.json", dev.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
+            applyTaskManifest("Tasks/Yarn/task.json", prod.TaskIds.Yarn, process.env.TASK_YARN_NAME);
+            applyTaskManifest("Tasks/YarnInstaller/task.json", prod.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
           '
 
       - name: Package extension
@@ -363,30 +363,11 @@ jobs:
           fi
           # Publisher is already baked into the VSIX via replace-tokens.
           # Extension ID is set by configuration.json (production = "yarn-ado").
-          set +e
-          PUBLISH_OUTPUT=$(tfx extension publish \
-            --vsix "$VSIX_PATH" \
+          tfx extension publish \
+            --manifest-globs vss-extension.json \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
-            --token "$AZURE_DEVOPS_EXT_PAT" \
-            --no-wait-validation 2>&1)
-          PUBLISH_EXIT=$?
-          set -e
-
-          echo "$PUBLISH_OUTPUT"
-
-          if [[ $PUBLISH_EXIT -ne 0 ]]; then
-            if echo "$PUBLISH_OUTPUT" | grep -qiE "Request timeout|timed out|ETIMEDOUT"; then
-              echo "Public extension publish timed out; continuing so release flow can proceed."
-              exit 0
-            fi
-            if echo "$PUBLISH_OUTPUT" | grep -qiE "The extension already exists"; then
-              echo "Public extension already exists; continuing release flow."
-              exit 0
-            fi
-            echo "Public extension publish failed with a non-timeout error."
-            exit $PUBLISH_EXIT
-          fi
+            --token "$AZURE_DEVOPS_EXT_PAT"
 
       - name: Install Extension to Azure DevOps Organizations
         env:
