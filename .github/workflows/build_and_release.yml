@@ -118,6 +118,42 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm install -g tfx-cli
 
+      - name: Show effective dev extension identity
+        env:
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
+        run: |
+          echo "Publisher: ${PUBLISHER_ID}"
+          echo "Base extension id: ${EXTENSION_ID}"
+          echo "Expected dev extension id: ${EXTENSION_ID}-dev"
+          node -e '
+            const fs = require("fs");
+            const manifest = JSON.parse(fs.readFileSync(".BuildOutput/dev/vss-extension.json", "utf8"));
+            console.log(`Packaged manifest publisher: ${manifest.publisher}`);
+            console.log(`Packaged manifest id: ${manifest.id}`);
+            console.log(`Packaged manifest version: ${manifest.version}`);
+          '
+
+      - name: Probe marketplace state for dev extension
+        env:
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+        run: |
+          if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
+            echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping marketplace probe."
+            exit 0
+          fi
+          set +e
+          tfx extension show \
+            --publisher "$PUBLISHER_ID" \
+            --extension-id "${EXTENSION_ID}-dev" \
+            --service-url https://marketplace.visualstudio.com \
+            --token "$AZURE_DEVOPS_EXT_PAT"
+          status=$?
+          set -e
+          echo "tfx extension show exit code: $status"
+
       - name: Locate VSIX
         run: |
           # Use the dev environment VSIX for private publishing.
@@ -342,6 +378,41 @@ jobs:
 
       - name: Install tfx-cli
         run: npm install -g tfx-cli
+
+      - name: Show effective production extension identity
+        env:
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
+        run: |
+          echo "Publisher: ${PUBLISHER_ID}"
+          echo "Expected production extension id: ${EXTENSION_ID}"
+          node -e '
+            const fs = require("fs");
+            const manifest = JSON.parse(fs.readFileSync(".BuildOutput/production/vss-extension.json", "utf8"));
+            console.log(`Packaged manifest publisher: ${manifest.publisher}`);
+            console.log(`Packaged manifest id: ${manifest.id}`);
+            console.log(`Packaged manifest version: ${manifest.version}`);
+          '
+
+      - name: Probe marketplace state for production extension
+        env:
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+        run: |
+          if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
+            echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping marketplace probe."
+            exit 0
+          fi
+          set +e
+          tfx extension show \
+            --publisher "$PUBLISHER_ID" \
+            --extension-id "$EXTENSION_ID" \
+            --service-url https://marketplace.visualstudio.com \
+            --token "$AZURE_DEVOPS_EXT_PAT"
+          status=$?
+          set -e
+          echo "tfx extension show exit code: $status"
 
       - name: Locate VSIX
         run: |
