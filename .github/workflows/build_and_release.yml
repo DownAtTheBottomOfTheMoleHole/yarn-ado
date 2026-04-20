@@ -171,16 +171,20 @@ jobs:
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
             echo "Required publish secrets are not configured. Skipping private extension publish."
             exit 0
           fi
-          # Publisher is already baked into the VSIX via replace-tokens.
-          # Extension ID is set by PRIVATE_EXTENSIONID plus configuration.json dev suffix (-dev).
+          # Explicitly set publisher and extension ID to avoid mismatches between VSIX metadata
+          # and effective publish target. The dev lane appends "-dev" via configuration.json.
           set +e
           PUBLISH_OUTPUT=$(tfx extension publish \
             --vsix "$VSIX_PATH" \
+            --publisher "$PUBLISHER_ID" \
+            --extension-id "${EXTENSION_ID}-dev" \
             --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
@@ -427,15 +431,19 @@ jobs:
       - name: Publish public extension
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
             echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping Marketplace publish."
             exit 0
           fi
-          # Publisher is already baked into the VSIX via replace-tokens.
-          # Extension ID is set by configuration.json (production = "yarn-azure-devops").
+          # Explicitly set publisher and extension ID to avoid mismatches between VSIX metadata
+          # and effective publish target.
           tfx extension publish \
             --vsix "$VSIX_PATH" \
+            --publisher "$PUBLISHER_ID" \
+            --extension-id "$EXTENSION_ID" \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT"
