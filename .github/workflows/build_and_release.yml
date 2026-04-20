@@ -111,6 +111,21 @@ jobs:
             applyTaskManifest("Tasks/YarnInstaller/task.json", dev.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
           '
 
+      - name: Scope packaging config to dev only
+        run: |
+          node -e '
+            const fs = require("fs");
+            const file = "configuration.json";
+            const config = JSON.parse(fs.readFileSync(file, "utf8"));
+            const dev = config.environments.filter((e) => e.Name === "dev");
+            if (dev.length !== 1) {
+              throw new Error(`Expected exactly one dev environment, found ${dev.length}`);
+            }
+            config.environments = dev;
+            fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
+            console.log("Scoped packaging configuration to dev environment.");
+          '
+
       - name: Package extension
         run: npm run package -- --version "$PRIVATE_EXTENSION_VERSION" --noversiontransform
 
@@ -157,9 +172,8 @@ jobs:
       - name: Locate VSIX
         run: |
           # Use the dev environment VSIX for private publishing.
-          # npm run package creates per-environment VISXes from configuration.json;
-          # the dev build has the "-dev" extension-ID suffix and separate task GUIDs
-          # so it won't clash with the production (public) extension.
+          # configuration.json is scoped to dev in this job, so packaging emits only
+          # the dev extension VSIX with the "-dev" extension-ID suffix.
           VSIX_PATH=$(find .BuildOutput/dev -maxdepth 1 -name '*.vsix' | head -n 1)
           if [[ -z "$VSIX_PATH" ]]; then
             echo "No VSIX was generated."
@@ -338,6 +352,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Build
+        run: npm run build
+
       - name: Prepare extension and task manifests
         env:
           PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
@@ -374,6 +391,21 @@ jobs:
 
             applyTaskManifest("Tasks/Yarn/task.json", prod.TaskIds.Yarn, process.env.TASK_YARN_NAME);
             applyTaskManifest("Tasks/YarnInstaller/task.json", prod.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
+          '
+
+      - name: Scope packaging config to production only
+        run: |
+          node -e '
+            const fs = require("fs");
+            const file = "configuration.json";
+            const config = JSON.parse(fs.readFileSync(file, "utf8"));
+            const prod = config.environments.filter((e) => e.Name === "production");
+            if (prod.length !== 1) {
+              throw new Error(`Expected exactly one production environment, found ${prod.length}`);
+            }
+            config.environments = prod;
+            fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
+            console.log("Scoped packaging configuration to production environment.");
           '
 
       - name: Package extension
@@ -420,7 +452,8 @@ jobs:
       - name: Locate VSIX
         run: |
           # Use the production environment VSIX for public publishing.
-          # This has no ID suffix and uses production task GUIDs from configuration.json.
+          # configuration.json is scoped to production in this job, so packaging emits only
+          # the production extension VSIX with production task GUIDs.
           VSIX_PATH=$(find .BuildOutput/production -maxdepth 1 -name '*.vsix' | head -n 1)
           if [[ -z "$VSIX_PATH" ]]; then
             echo "No VSIX was generated."
@@ -452,6 +485,8 @@ jobs:
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
             echo "AZURE_DEVOPS_EXT_PAT or AZURE_DEVOPS_ORGS not configured. Skipping org installation."
@@ -465,8 +500,8 @@ jobs:
             az extension add --name azure-devops --allow-preview true || true
             echo "$AZURE_DEVOPS_EXT_PAT" | az devops login
             az devops extension install \
-              --publisher-id "${{ secrets.PUBLISHERID }}" \
-              --extension-id "${{ secrets.PUBLIC_EXTENSIONID }}" \
+              --publisher-id "$PUBLISHER_ID" \
+              --extension-id "$EXTENSION_ID" \
               --org "https://dev.azure.com/$org" || echo "Extension may already be installed in $org"
           done
 
