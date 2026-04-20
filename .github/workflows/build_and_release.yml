@@ -75,12 +75,12 @@ jobs:
 
       - name: Prepare extension and task manifests
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
-          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
-          EXTENSION_AUTHOR: ${{ vars.EXTENSION_AUTHOR || secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          TASK_YARN_NAME: ${{ vars.TASK_YARN_NAME || 'Yarn' }}
-          TASK_YARN_INSTALLER_NAME: ${{ vars.TASK_YARN_INSTALLER_NAME || 'YarnInstaller' }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID }}
+          EXTENSION_NAME: ${{ secrets.PRIVATE_EXTENSION_NAME }}
+          EXTENSION_AUTHOR: ${{ secrets.EXTENSION_AUTHOR }}
+          TASK_YARN_NAME: ${{ secrets.TASK_YARN_NAME }}
+          TASK_YARN_INSTALLER_NAME: ${{ secrets.TASK_YARN_INSTALLER_NAME }}
           MANIFEST_VERSION: ${{ env.PRIVATE_EXTENSION_VERSION }}
         run: |
           node -e '
@@ -135,8 +135,8 @@ jobs:
 
       - name: Show effective dev extension identity
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID }}
         run: |
           echo "Publisher: ${PUBLISHER_ID}"
           echo "Base extension id: ${EXTENSION_ID}"
@@ -151,8 +151,8 @@ jobs:
 
       - name: Probe marketplace state for dev extension
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID }}
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
@@ -185,8 +185,8 @@ jobs:
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
             echo "Required publish secrets are not configured. Skipping private extension publish."
@@ -229,7 +229,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
-          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
 
       - name: Install Node.js
@@ -357,12 +357,12 @@ jobs:
 
       - name: Prepare extension and task manifests
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
-          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || 'Yarn for Azure DevOps' }}
-          EXTENSION_AUTHOR: ${{ vars.EXTENSION_AUTHOR || secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          TASK_YARN_NAME: ${{ vars.TASK_YARN_NAME || 'Yarn' }}
-          TASK_YARN_INSTALLER_NAME: ${{ vars.TASK_YARN_INSTALLER_NAME || 'YarnInstaller' }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
+          EXTENSION_NAME: ${{ secrets.PUBLIC_EXTENSION_NAME }}
+          EXTENSION_AUTHOR: ${{ secrets.EXTENSION_AUTHOR }}
+          TASK_YARN_NAME: ${{ secrets.TASK_YARN_NAME }}
+          TASK_YARN_INSTALLER_NAME: ${{ secrets.TASK_YARN_INSTALLER_NAME }}
           MANIFEST_VERSION: ${{ env.RELEASE_VERSION }}
         run: |
           node -e '
@@ -416,8 +416,8 @@ jobs:
 
       - name: Show effective production extension identity
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
         run: |
           echo "Publisher: ${PUBLISHER_ID}"
           echo "Expected production extension id: ${EXTENSION_ID}"
@@ -431,8 +431,8 @@ jobs:
 
       - name: Probe marketplace state for production extension
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
@@ -464,8 +464,8 @@ jobs:
       - name: Publish public extension
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
             echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping Marketplace publish."
@@ -502,8 +502,8 @@ jobs:
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
             echo "AZURE_DEVOPS_EXT_PAT or AZURE_DEVOPS_ORGS not configured. Skipping org installation."
