@@ -1,6 +1,6 @@
 "use strict";
 
-const { execSync, spawnSync } = require("child_process");
+const { spawnSync } = require("child_process");
 const fs = require("fs-extra");
 const path = require("path");
 const { parseArgs } = require("util");
@@ -25,7 +25,7 @@ const minor = parseInt(semverParts[1], 10);
 const patchBase = parseInt(semverParts[2] || "0", 10);
 
 // With --noversiontransform, use patch as-is.
-// Without it, apply ADO convention: patch * 1000 + 999 (or + prerelease index).
+// Without it, apply ADO convention: patch * 1000 + 999.
 const patch = noversiontransform ? patchBase : patchBase * 1000 + 999;
 const versionString = `${major}.${minor}.${patch}`;
 
@@ -49,9 +49,22 @@ const configPath = path.join(currentDirectory, "configuration.json");
 let configuration;
 try {
   configuration = require(configPath);
-} catch {
+} catch (err) {
+  if (
+    err &&
+    err.code === "MODULE_NOT_FOUND" &&
+    typeof err.message === "string" &&
+    err.message.includes(configPath)
+  ) {
+    throw new Error(
+      `configuration.json not found in project root: ${currentDirectory}`,
+      { cause: err },
+    );
+  }
+
   throw new Error(
-    `configuration.json not found in project root: ${currentDirectory}`,
+    `Failed to load configuration.json from project root: ${currentDirectory}. ${err && err.message ? err.message : "Unknown error."}`,
+    { cause: err },
   );
 }
 
@@ -59,7 +72,8 @@ for (const env of configuration.environments) {
   const environmentDirectory = path.join(buildOutputDirectory, env.Name);
   const environmentTasksDirectory = path.join(environmentDirectory, "Tasks");
 
-  fs.ensureDirSync(environmentDirectory);
+  // Start from a clean output directory to avoid stale artefacts.
+  fs.emptyDirSync(environmentDirectory);
 
   // Copy extension assets (icons, overview, vss-extension.json, etc.)
   fs.copySync(extensionDirectory, environmentDirectory, {
@@ -144,10 +158,20 @@ for (const env of configuration.environments) {
       // The output directory is outside the workspace glob paths, so npm treats
       // it as a standalone package and produces no lock file.
       console.log(`Installing production dependencies for ${taskDir.name}...`);
-      execSync("npm install --omit=dev --no-package-lock", {
-        cwd: taskDir.directory,
-        stdio: "inherit",
-      });
+      const npmInstallResult = spawnSync(
+        "npm",
+        ["install", "--omit=dev", "--no-package-lock"],
+        {
+          cwd: taskDir.directory,
+          stdio: "inherit",
+          shell: false,
+        },
+      );
+      if (npmInstallResult.status !== 0) {
+        throw new Error(
+          `npm install failed for ${taskDir.name} (exit ${npmInstallResult.status})`,
+        );
+      }
     } else {
       // Task not configured for this environment – remove it from output
       fs.removeSync(taskDir.directory);

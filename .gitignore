@@ -218,6 +218,7 @@ FakesAssemblies/
 *.GhostDoc.xml
 
 # Node.js Tools for Visual Studio
+configuration.json
 .ntvs_analysis.dat
 
 # Visual Studio 6 build log
