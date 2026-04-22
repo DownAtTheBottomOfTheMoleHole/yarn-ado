@@ -9,12 +9,11 @@
     "doc": "docs"
   },
   "scripts": {
-    "clean": "node ./node_modules/gl-vsts-tasks-build-scripts/run/vsts-build-tools-clean",
+    "clean": "node ./BuildScripts/clean.js",
     "prepare": "husky",
-    "postinstall": "node ./node_modules/gl-vsts-tasks-build-scripts/run/vsts-build-tools-install",
-    "prebuild": "node ./node_modules/gl-vsts-tasks-build-scripts/run/vsts-build-tools-prebuild",
+    "postinstall": "node ./BuildScripts/install-tasks.js",
     "build": "tsc",
-    "package": "node ./node_modules/gl-vsts-tasks-build-scripts/run/vsts-build-tools-package",
+    "package": "node ./BuildScripts/package.js",
     "test": "run-s build test:no-build",
     "test:no-build": "node test.js",
     "fix:prettier": "prettier Tasks/**/*.ts --write",
@@ -52,15 +51,15 @@
     "@typescript-eslint/parser": "^8.57.2",
     "async": "^3.2.6",
     "eslint": "^10.1.0",
-    "gl-vsts-tasks-build-scripts": "^0.6.0",
     "husky": "^9.1.7",
     "karma": "^6.4.4",
-    "npm-run-all": "4.1.5",
+    "npm-run-all2": "5.0.0",
     "prettier": "^3.8.1",
     "pretty-quick": "^4.2.2",
     "typescript": "^5.9.3",
     "jasmine-reporters": "^2.5.2",
-    "jasmine": "^6.1.0"
+    "jasmine": "^6.1.0",
+    "tfx-cli": "^0.23.1"
   },
   "dependencies": {}
 }

@@ -10,7 +10,7 @@
     "ini": "^6.0.0",
     "ip-address": "^10.1.0",
     "ltx": "^3.1.2",
-    "q": "^1.5.1",
-    "typed-rest-client": "^2.2.0"
+    "q": "^2.0.3",
+    "typed-rest-client": "^2.3.0"
   }
 }
