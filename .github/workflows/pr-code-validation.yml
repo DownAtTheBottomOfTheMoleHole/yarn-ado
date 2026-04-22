@@ -132,10 +132,14 @@ jobs:
             exit 1
           fi
 
+          PACKAGED_PUBLISHER=$(node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync(".BuildOutput/dev/vss-extension.json","utf8"));process.stdout.write(m.publisher);')
+          PACKAGED_EXTENSION_ID=$(node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync(".BuildOutput/dev/vss-extension.json","utf8"));process.stdout.write(m.id);')
+          echo "Publishing private extension id: ${PACKAGED_EXTENSION_ID}"
+
           tfx extension publish \
             --vsix "$VSIX_PATH" \
-            --publisher "$PUBLISHER_ID" \
-            --extension-id "${PRIVATE_EXTENSION_ID}-dev" \
+            --publisher "$PACKAGED_PUBLISHER" \
+            --extension-id "$PACKAGED_EXTENSION_ID" \
             --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
