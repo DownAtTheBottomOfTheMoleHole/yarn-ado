@@ -52,9 +52,9 @@ jobs:
 
       - name: Setup Node.js
         if: ${{ !cancelled() }}
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: "20.x"
+          node-version: "24.x"
           check-latest: true
 
       - name: Install dependencies
@@ -76,8 +76,8 @@ jobs:
       - name: Prepare extension and task manifests
         env:
           PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
-          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
+          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
           EXTENSION_AUTHOR: ${{ vars.EXTENSION_AUTHOR || secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
           TASK_YARN_NAME: ${{ vars.TASK_YARN_NAME || 'Yarn' }}
           TASK_YARN_INSTALLER_NAME: ${{ vars.TASK_YARN_INSTALLER_NAME || 'YarnInstaller' }}
@@ -111,6 +111,21 @@ jobs:
             applyTaskManifest("Tasks/YarnInstaller/task.json", dev.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
           '
 
+      - name: Scope packaging config to dev only
+        run: |
+          node -e '
+            const fs = require("fs");
+            const file = "configuration.json";
+            const config = JSON.parse(fs.readFileSync(file, "utf8"));
+            const dev = config.environments.filter((e) => e.Name === "dev");
+            if (dev.length !== 1) {
+              throw new Error(`Expected exactly one dev environment, found ${dev.length}`);
+            }
+            config.environments = dev;
+            fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
+            console.log("Scoped packaging configuration to dev environment.");
+          '
+
       - name: Package extension
         run: npm run package -- --version "$PRIVATE_EXTENSION_VERSION" --noversiontransform
 
@@ -118,12 +133,47 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm install -g tfx-cli
 
+      - name: Show effective dev extension identity
+        env:
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
+        run: |
+          echo "Publisher: ${PUBLISHER_ID}"
+          echo "Base extension id: ${EXTENSION_ID}"
+          echo "Expected dev extension id: ${EXTENSION_ID}-dev"
+          node -e '
+            const fs = require("fs");
+            const manifest = JSON.parse(fs.readFileSync(".BuildOutput/dev/vss-extension.json", "utf8"));
+            console.log(`Packaged manifest publisher: ${manifest.publisher}`);
+            console.log(`Packaged manifest id: ${manifest.id}`);
+            console.log(`Packaged manifest version: ${manifest.version}`);
+          '
+
+      - name: Probe marketplace state for dev extension
+        env:
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+        run: |
+          if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
+            echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping marketplace probe."
+            exit 0
+          fi
+          set +e
+          tfx extension show \
+            --publisher "$PUBLISHER_ID" \
+            --extension-id "${EXTENSION_ID}-dev" \
+            --service-url https://marketplace.visualstudio.com \
+            --token "$AZURE_DEVOPS_EXT_PAT"
+          status=$?
+          set -e
+          echo "tfx extension show exit code: $status"
+
       - name: Locate VSIX
         run: |
           # Use the dev environment VSIX for private publishing.
-          # npm run package creates per-environment VISXes from configuration.json;
-          # the dev build has the "-dev" extension-ID suffix and separate task GUIDs
-          # so it won't clash with the production (public) extension.
+          # configuration.json is scoped to dev in this job, so packaging emits only
+          # the dev extension VSIX with the "-dev" extension-ID suffix.
           VSIX_PATH=$(find .BuildOutput/dev -maxdepth 1 -name '*.vsix' | head -n 1)
           if [[ -z "$VSIX_PATH" ]]; then
             echo "No VSIX was generated."
@@ -135,16 +185,20 @@ jobs:
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
             echo "Required publish secrets are not configured. Skipping private extension publish."
             exit 0
           fi
-          # Publisher is already baked into the VSIX via replace-tokens.
-          # Extension ID is set by configuration.json (dev = "yarn-ado-dev").
+          # Explicitly set publisher and extension ID to avoid mismatches between VSIX metadata
+          # and effective publish target. The dev lane appends "-dev" via configuration.json.
           set +e
           PUBLISH_OUTPUT=$(tfx extension publish \
             --vsix "$VSIX_PATH" \
+            --publisher "$PUBLISHER_ID" \
+            --extension-id "${EXTENSION_ID}-dev" \
             --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
@@ -179,9 +233,9 @@ jobs:
           persist-credentials: true
 
       - name: Install Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: "20.x"
+          node-version: "24.x"
           check-latest: true
 
       - name: Install dependencies
@@ -290,19 +344,22 @@ jobs:
           echo "RELEASE_TAG=v${{ env.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: "20.x"
+          node-version: "24.x"
           check-latest: true
 
       - name: Install dependencies
         run: npm install
 
+      - name: Build
+        run: npm run build
+
       - name: Prepare extension and task manifests
         env:
           PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
-          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
+          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || 'Yarn for Azure DevOps' }}
           EXTENSION_AUTHOR: ${{ vars.EXTENSION_AUTHOR || secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
           TASK_YARN_NAME: ${{ vars.TASK_YARN_NAME || 'Yarn' }}
           TASK_YARN_INSTALLER_NAME: ${{ vars.TASK_YARN_INSTALLER_NAME || 'YarnInstaller' }}
@@ -336,16 +393,67 @@ jobs:
             applyTaskManifest("Tasks/YarnInstaller/task.json", prod.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
           '
 
+      - name: Scope packaging config to production only
+        run: |
+          node -e '
+            const fs = require("fs");
+            const file = "configuration.json";
+            const config = JSON.parse(fs.readFileSync(file, "utf8"));
+            const prod = config.environments.filter((e) => e.Name === "production");
+            if (prod.length !== 1) {
+              throw new Error(`Expected exactly one production environment, found ${prod.length}`);
+            }
+            config.environments = prod;
+            fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
+            console.log("Scoped packaging configuration to production environment.");
+          '
+
       - name: Package extension
         run: npm run package -- --version "$RELEASE_VERSION" --noversiontransform
 
       - name: Install tfx-cli
         run: npm install -g tfx-cli
 
+      - name: Show effective production extension identity
+        env:
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
+        run: |
+          echo "Publisher: ${PUBLISHER_ID}"
+          echo "Expected production extension id: ${EXTENSION_ID}"
+          node -e '
+            const fs = require("fs");
+            const manifest = JSON.parse(fs.readFileSync(".BuildOutput/production/vss-extension.json", "utf8"));
+            console.log(`Packaged manifest publisher: ${manifest.publisher}`);
+            console.log(`Packaged manifest id: ${manifest.id}`);
+            console.log(`Packaged manifest version: ${manifest.version}`);
+          '
+
+      - name: Probe marketplace state for production extension
+        env:
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+        run: |
+          if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
+            echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping marketplace probe."
+            exit 0
+          fi
+          set +e
+          tfx extension show \
+            --publisher "$PUBLISHER_ID" \
+            --extension-id "$EXTENSION_ID" \
+            --service-url https://marketplace.visualstudio.com \
+            --token "$AZURE_DEVOPS_EXT_PAT"
+          status=$?
+          set -e
+          echo "tfx extension show exit code: $status"
+
       - name: Locate VSIX
         run: |
           # Use the production environment VSIX for public publishing.
-          # This has no ID suffix and uses production task GUIDs from configuration.json.
+          # configuration.json is scoped to production in this job, so packaging emits only
+          # the production extension VSIX with production task GUIDs.
           VSIX_PATH=$(find .BuildOutput/production -maxdepth 1 -name '*.vsix' | head -n 1)
           if [[ -z "$VSIX_PATH" ]]; then
             echo "No VSIX was generated."
@@ -356,23 +464,46 @@ jobs:
       - name: Publish public extension
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
             echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping Marketplace publish."
             exit 0
           fi
-          # Publisher is already baked into the VSIX via replace-tokens.
-          # Extension ID is set by configuration.json (production = "yarn-ado").
-          tfx extension publish \
+          # Explicitly set publisher and extension ID to avoid mismatches between VSIX metadata
+          # and effective publish target. --no-prompt is required for non-interactive CI.
+          set +e
+          PUBLISH_OUTPUT=$(tfx extension publish \
             --vsix "$VSIX_PATH" \
+            --publisher "$PUBLISHER_ID" \
+            --extension-id "$EXTENSION_ID" \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
-            --token "$AZURE_DEVOPS_EXT_PAT"
+            --token "$AZURE_DEVOPS_EXT_PAT" \
+            --no-prompt 2>&1)
+          PUBLISH_EXIT=$?
+          set -e
+
+          echo "$PUBLISH_OUTPUT"
+
+          if [[ $PUBLISH_EXIT -ne 0 ]]; then
+            if echo "$PUBLISH_OUTPUT" | grep -qiE "Request timeout|timed out|ETIMEDOUT"; then
+              echo "Public extension publish timed out; failing fast so release can be retried."
+            elif echo "$PUBLISH_OUTPUT" | grep -qiE "already exists|forbidden|unauthorized|permission"; then
+              echo "Public extension publish failed due to identity/permission state. Check publisher ownership and PAT scope."
+            else
+              echo "Public extension publish failed with an unexpected error."
+            fi
+            exit $PUBLISH_EXIT
+          fi
 
       - name: Install Extension to Azure DevOps Organizations
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
+          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
             echo "AZURE_DEVOPS_EXT_PAT or AZURE_DEVOPS_ORGS not configured. Skipping org installation."
@@ -386,8 +517,8 @@ jobs:
             az extension add --name azure-devops --allow-preview true || true
             echo "$AZURE_DEVOPS_EXT_PAT" | az devops login
             az devops extension install \
-              --publisher-id "${{ secrets.PUBLISHERID }}" \
-              --extension-id "${{ secrets.PUBLIC_EXTENSIONID }}" \
+              --publisher-id "$PUBLISHER_ID" \
+              --extension-id "$EXTENSION_ID" \
               --org "https://dev.azure.com/$org" || echo "Extension may already be installed in $org"
           done
 
