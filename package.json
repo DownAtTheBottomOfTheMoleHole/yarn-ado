@@ -67,7 +67,7 @@
     "azure-pipelines-task-lib": "^5.2.8",
     "azure-pipelines-tool-lib": "^2.0.12",
     "fs-extra": "^11.3.4",
-    "https-proxy-agent": "^7.0.6",
+    "https-proxy-agent": "^6.0.0",
     "ini": "^6.0.0",
     "ip-address": "^10.1.0",
     "ltx": "^3.1.2",
