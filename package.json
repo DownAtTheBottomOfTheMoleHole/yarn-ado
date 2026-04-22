@@ -8,10 +8,13 @@
   "directories": {
     "doc": "docs"
   },
+  "workspaces": [
+    "Tasks/Yarn",
+    "Tasks/YarnInstaller"
+  ],
   "scripts": {
     "clean": "node ./BuildScripts/clean.js",
     "prepare": "husky",
-    "postinstall": "node ./BuildScripts/install-tasks.js",
     "build": "tsc",
     "package": "node ./BuildScripts/package.js",
     "test": "run-s build test:no-build",
@@ -51,6 +54,7 @@
     "@typescript-eslint/parser": "^8.57.2",
     "async": "^3.2.6",
     "eslint": "^10.1.0",
+    "fs-extra": "^11.3.4",
     "husky": "^9.1.7",
     "karma": "^6.4.4",
     "npm-run-all2": "5.0.0",
