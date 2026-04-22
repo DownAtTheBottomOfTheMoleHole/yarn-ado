@@ -1,6 +1,5 @@
-name: PR Code Validation and Publish Private Extension
+name: PR Validation and Private Publish
 
-# Trigger on pull requests to main and dev branches
 on:
   pull_request:
     branches:
@@ -11,15 +10,10 @@ permissions:
   contents: read
   pull-requests: read
 
-env:
-  npm_cache: ${{ github.workspace }}/npm_cache
-
 jobs:
-  # Build and test job
-  build-and-test:
-    name: Build and Test
+  validate:
+    name: Build, Lint, and Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -44,15 +38,20 @@ jobs:
       - name: Test
         run: npm run test:no-build
 
-  # Private extension publish job
-  publish-private-extension:
+  publish-private:
     name: Publish Private Extension
     runs-on: ubuntu-latest
-    needs: build-and-test
-    # Only run if PR is from the same repository (not a fork)
-    # This prevents exposing secrets to untrusted PR code from forks
+    needs: validate
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
-
+    env:
+      PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+      EXTENSION_AUTHOR: ${{ secrets.EXTENSION_AUTHOR }}
+      PRIVATE_EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID }}
+      PRIVATE_EXTENSION_NAME: ${{ secrets.PRIVATE_EXTENSION_NAME }}
+      PRIVATE_TASK_ID_YARN: ${{ secrets.PRIVATE_TASK_ID_YARN }}
+      PRIVATE_TASK_ID_YARN_INSTALLER: ${{ secrets.PRIVATE_TASK_ID_YARN_INSTALLER }}
+      TASK_YARN_NAME: ${{ secrets.TASK_YARN_NAME }}
+      TASK_YARN_INSTALLER_NAME: ${{ secrets.TASK_YARN_INSTALLER_NAME }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -65,21 +64,15 @@ jobs:
           versionSpec: "6.x"
           preferLatestVersion: true
 
-      - name: Determine Version for PR
+      - name: Determine version
         uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
         with:
           configFilePath: GitVersion.yml
 
-      - name: Set PR version with build number
+      - name: Set package version
         run: |
-          # Use epoch minutes (minutes since 1970-01-01 UTC) as a monotonically increasing
-          # build number that stays within TFX CLI's 0-2147483647 range per version component.
-          # Current value is ~29.5 million, well under the ~2.1 billion max.
-          # Note: Collision risk exists if multiple PR runs start within the same minute,
-          # but this is extremely rare in practice. If a collision occurs, retry the workflow.
           EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
-          echo "PACKAGE_VERSION=${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${EPOCH_MINUTES}" >> "$GITHUB_ENV"
-          echo "Building PR version: ${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${EPOCH_MINUTES}"
+          echo "PACKAGE_VERSION=${GitVersion_Major}.${GitVersion_Minor}.${EPOCH_MINUTES}" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
@@ -90,29 +83,18 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Prepare extension and task manifests
-        env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
-          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || secrets.PUBLIC_EXTENSIONID || 'yarn-ado' }}
-          EXTENSION_AUTHOR: ${{ vars.EXTENSION_AUTHOR || secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          TASK_YARN_NAME: ${{ vars.TASK_YARN_NAME || 'Yarn' }}
-          TASK_YARN_INSTALLER_NAME: ${{ vars.TASK_YARN_INSTALLER_NAME || 'YarnInstaller' }}
-          MANIFEST_VERSION: ${{ env.PACKAGE_VERSION }}
+      - name: Prepare private manifests
         run: |
           node -e '
             const fs = require("fs");
-            const config = JSON.parse(fs.readFileSync("configuration.json", "utf8"));
-            const dev = config.environments.find((e) => e.Name === "dev");
-            if (!dev) throw new Error("dev environment not found in configuration.json");
-            const [major, minor, patch] = process.env.MANIFEST_VERSION.split(".").map((v) => Number.parseInt(v, 10));
+            const [major, minor, patch] = process.env.PACKAGE_VERSION.split(".").map((v) => Number.parseInt(v, 10));
 
             const extensionFile = "Extension/vss-extension.json";
             const extensionManifest = JSON.parse(fs.readFileSync(extensionFile, "utf8"));
             extensionManifest.publisher = process.env.PUBLISHER_ID;
-            extensionManifest.id = process.env.EXTENSION_ID;
-            extensionManifest.name = process.env.EXTENSION_NAME;
-            extensionManifest.version = process.env.MANIFEST_VERSION;
+            extensionManifest.id = process.env.PRIVATE_EXTENSION_ID;
+            extensionManifest.name = process.env.PRIVATE_EXTENSION_NAME;
+            extensionManifest.version = process.env.PACKAGE_VERSION;
             fs.writeFileSync(extensionFile, JSON.stringify(extensionManifest, null, 4) + "\n");
 
             const applyTaskManifest = (file, id, name) => {
@@ -124,27 +106,15 @@ jobs:
               fs.writeFileSync(file, JSON.stringify(manifest, null, 2) + "\n");
             };
 
-            applyTaskManifest("Tasks/Yarn/task.json", dev.TaskIds.Yarn, process.env.TASK_YARN_NAME);
-            applyTaskManifest("Tasks/YarnInstaller/task.json", dev.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
+            applyTaskManifest("Tasks/Yarn/task.json", process.env.PRIVATE_TASK_ID_YARN, process.env.TASK_YARN_NAME);
+            applyTaskManifest("Tasks/YarnInstaller/task.json", process.env.PRIVATE_TASK_ID_YARN_INSTALLER, process.env.TASK_YARN_INSTALLER_NAME);
           '
 
-      - name: Package extension
+      - name: Package private extension
         run: npm run package -- --version "$PACKAGE_VERSION" --noversiontransform
 
       - name: Install tfx-cli
         run: npm install -g tfx-cli
-
-      - name: Locate VSIX
-        run: |
-          # Use the dev environment VSIX for private PR publishing.
-          # The dev build has the "-dev" extension-ID suffix and separate task GUIDs
-          # so it won't clash with the production (public) extension.
-          VSIX_PATH=$(find .BuildOutput/dev -maxdepth 1 -name '*.vsix' | head -n 1)
-          if [[ -z "$VSIX_PATH" ]]; then
-            echo "No VSIX was generated."
-            exit 1
-          fi
-          echo "VSIX_PATH=$VSIX_PATH" >> "$GITHUB_ENV"
 
       - name: Publish private extension
         env:
@@ -152,13 +122,26 @@ jobs:
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
-            echo "Required publish secrets are not configured. Skipping private extension publish."
+            echo "Required publish secrets are not configured. Skipping private publish."
             exit 0
           fi
 
+          VSIX_PATH=$(find .BuildOutput/dev -maxdepth 1 -name '*.vsix' | head -n 1)
+          if [[ -z "$VSIX_PATH" ]]; then
+            echo "No private VSIX found under .BuildOutput/dev."
+            exit 1
+          fi
+
+          PACKAGED_PUBLISHER=$(node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync(".BuildOutput/dev/vss-extension.json","utf8"));process.stdout.write(m.publisher);')
+          PACKAGED_EXTENSION_ID=$(node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync(".BuildOutput/dev/vss-extension.json","utf8"));process.stdout.write(m.id);')
+          echo "Publishing private extension id: ${PACKAGED_EXTENSION_ID}"
+
           tfx extension publish \
             --vsix "$VSIX_PATH" \
+            --publisher "$PACKAGED_PUBLISHER" \
+            --extension-id "$PACKAGED_EXTENSION_ID" \
             --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
-            --share-with "$AZURE_DEVOPS_ORGS"
+            --share-with "$AZURE_DEVOPS_ORGS" \
+            --no-prompt
