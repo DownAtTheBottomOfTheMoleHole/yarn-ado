@@ -1,6 +1,6 @@
 "use strict";
 
-const { execSync } = require("child_process");
+const { execSync, spawnSync } = require("child_process");
 const fs = require("fs-extra");
 const path = require("path");
 const { parseArgs } = require("util");
@@ -45,9 +45,15 @@ const EXCLUDED_TASK_ITEMS = new Set([
 
 fs.ensureDirSync(buildOutputDirectory);
 
-const configuration = require(
-  path.join(currentDirectory, "configuration.json"),
-);
+const configPath = path.join(currentDirectory, "configuration.json");
+let configuration;
+try {
+  configuration = require(configPath);
+} catch {
+  throw new Error(
+    `configuration.json not found in project root: ${currentDirectory}`,
+  );
+}
 
 for (const env of configuration.environments) {
   const environmentDirectory = path.join(buildOutputDirectory, env.Name);
@@ -150,15 +156,26 @@ for (const env of configuration.environments) {
 
   fs.writeJsonSync(extensionFilePath, extension, { spaces: 4 });
 
-  // Create the VSIX
-  const tfxCmd = [
-    "tfx extension create",
-    `--root "${environmentDirectory}"`,
-    `--manifest-globs "${extensionFilePath}"`,
-    `--output-path "${environmentDirectory}"`,
-  ].join(" ");
-
+  // Create the VSIX using array-form to avoid shell injection
   console.log(`Creating extension for ${env.Name}...`);
-  execSync(tfxCmd, { stdio: "inherit" });
+  const tfxResult = spawnSync(
+    "tfx",
+    [
+      "extension",
+      "create",
+      "--root",
+      environmentDirectory,
+      "--manifest-globs",
+      extensionFilePath,
+      "--output-path",
+      environmentDirectory,
+    ],
+    { stdio: "inherit", shell: false },
+  );
+  if (tfxResult.status !== 0) {
+    throw new Error(
+      `tfx extension create failed for ${env.Name} (exit ${tfxResult.status})`,
+    );
+  }
   console.log(`tfx extension create done for ${env.Name}`);
 }
