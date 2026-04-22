@@ -1,4 +1,4 @@
-name: Build and release extension
+name: Build and Release Extension
 
 on:
   push:
@@ -8,94 +8,106 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
-
-env:
-  npm_cache: ${{ github.workspace }}/npm_cache
 
 jobs:
-  # Build, test and publish private extension job
-  build:
-    name: Build, Test and Publish Private Extension
+  validate:
+    name: Build, Lint, and Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
-          persist-credentials: true
-
-      - name: Install GitVersion
-        if: ${{ !cancelled() }}
-        uses: gittools/actions/gitversion/setup@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
-        with:
-          versionSpec: "6.x"
-          preferLatestVersion: true
-
-      - name: Determine Version
-        if: ${{ !cancelled() }}
-        uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
-        with:
-          configFilePath: GitVersion.yml
-
-      - name: Set extension version
-        run: |
-          # Use epoch minutes for private extension builds to maintain monotonic increase
-          # and compatibility with PR builds (which also use epoch minutes).
-          # Both PR and main branch builds publish to the same PRIVATE_EXTENSIONID,
-          # so they must use the same versioning scheme to avoid conflicts.
-          EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
-          PRIVATE_EXT_VERSION="${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${EPOCH_MINUTES}"
-          echo "PRIVATE_EXTENSION_VERSION=$PRIVATE_EXT_VERSION" >> "$GITHUB_ENV"
-          echo "RELEASE_VERSION=${{ env.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
-          echo "Building private extension version: $PRIVATE_EXT_VERSION"
 
       - name: Setup Node.js
-        if: ${{ !cancelled() }}
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: "24.x"
           check-latest: true
 
       - name: Install dependencies
-        if: ${{ !cancelled() }}
         run: npm install
 
       - name: Build
-        if: ${{ !cancelled() }}
         run: npm run build
 
       - name: Lint
-        if: ${{ !cancelled() }}
         run: npm run lint
 
       - name: Test
-        if: ${{ !cancelled() }}
         run: npm run test:no-build
 
-      - name: Prepare extension and task manifests
-        env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
-          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
-          EXTENSION_AUTHOR: ${{ vars.EXTENSION_AUTHOR || secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          TASK_YARN_NAME: ${{ vars.TASK_YARN_NAME || 'Yarn' }}
-          TASK_YARN_INSTALLER_NAME: ${{ vars.TASK_YARN_INSTALLER_NAME || 'YarnInstaller' }}
-          MANIFEST_VERSION: ${{ env.PRIVATE_EXTENSION_VERSION }}
+  release:
+    name: Publish Private and Public Extensions
+    runs-on: ubuntu-latest
+    needs: validate
+    env:
+      PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+      EXTENSION_AUTHOR: ${{ secrets.EXTENSION_AUTHOR }}
+      PRIVATE_EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID }}
+      PRIVATE_EXTENSION_NAME: ${{ secrets.PRIVATE_EXTENSION_NAME }}
+      PRIVATE_TASK_ID_YARN: ${{ secrets.PRIVATE_TASK_ID_YARN }}
+      PRIVATE_TASK_ID_YARN_INSTALLER: ${{ secrets.PRIVATE_TASK_ID_YARN_INSTALLER }}
+      PUBLIC_EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
+      PUBLIC_EXTENSION_NAME: ${{ secrets.PUBLIC_EXTENSION_NAME }}
+      PUBLIC_TASK_ID_YARN: ${{ secrets.PUBLIC_TASK_ID_YARN }}
+      PUBLIC_TASK_ID_YARN_INSTALLER: ${{ secrets.PUBLIC_TASK_ID_YARN_INSTALLER }}
+      TASK_YARN_NAME: ${{ secrets.TASK_YARN_NAME }}
+      TASK_YARN_INSTALLER_NAME: ${{ secrets.TASK_YARN_INSTALLER_NAME }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
+        with:
+          versionSpec: "6.x"
+          preferLatestVersion: true
+
+      - name: Determine Version
+        uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
+        with:
+          configFilePath: GitVersion.yml
+
+      - name: Set release variables
+        id: set_release_vars
+        run: |
+          EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
+          PRIVATE_EXTENSION_VERSION="${GitVersion_Major}.${GitVersion_Minor}.${EPOCH_MINUTES}"
+          RELEASE_VERSION="${GitVersion_MajorMinorPatch}"
+          RELEASE_TAG="v${GitVersion_MajorMinorPatch}"
+
+          echo "PRIVATE_EXTENSION_VERSION=${PRIVATE_EXTENSION_VERSION}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_ENV"
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "24.x"
+          check-latest: true
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Prepare private manifests
         run: |
           node -e '
             const fs = require("fs");
-            const config = JSON.parse(fs.readFileSync("configuration.json", "utf8"));
-            const dev = config.environments.find((e) => e.Name === "dev");
-            if (!dev) throw new Error("dev environment not found in configuration.json");
-            const [major, minor, patch] = process.env.MANIFEST_VERSION.split(".").map((v) => Number.parseInt(v, 10));
+            const [major, minor, patch] = process.env.PRIVATE_EXTENSION_VERSION.split(".").map((v) => Number.parseInt(v, 10));
 
             const extensionFile = "Extension/vss-extension.json";
             const extensionManifest = JSON.parse(fs.readFileSync(extensionFile, "utf8"));
             extensionManifest.publisher = process.env.PUBLISHER_ID;
-            extensionManifest.id = process.env.EXTENSION_ID;
-            extensionManifest.name = process.env.EXTENSION_NAME;
-            extensionManifest.version = process.env.MANIFEST_VERSION;
+            extensionManifest.id = process.env.PRIVATE_EXTENSION_ID;
+            extensionManifest.name = process.env.PRIVATE_EXTENSION_NAME;
+            extensionManifest.version = process.env.PRIVATE_EXTENSION_VERSION;
             fs.writeFileSync(extensionFile, JSON.stringify(extensionManifest, null, 4) + "\n");
 
             const applyTaskManifest = (file, id, name) => {
@@ -107,277 +119,54 @@ jobs:
               fs.writeFileSync(file, JSON.stringify(manifest, null, 2) + "\n");
             };
 
-            applyTaskManifest("Tasks/Yarn/task.json", dev.TaskIds.Yarn, process.env.TASK_YARN_NAME);
-            applyTaskManifest("Tasks/YarnInstaller/task.json", dev.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
+            applyTaskManifest("Tasks/Yarn/task.json", process.env.PRIVATE_TASK_ID_YARN, process.env.TASK_YARN_NAME);
+            applyTaskManifest("Tasks/YarnInstaller/task.json", process.env.PRIVATE_TASK_ID_YARN_INSTALLER, process.env.TASK_YARN_INSTALLER_NAME);
           '
 
-      - name: Scope packaging config to dev only
-        run: |
-          node -e '
-            const fs = require("fs");
-            const file = "configuration.json";
-            const config = JSON.parse(fs.readFileSync(file, "utf8"));
-            const dev = config.environments.filter((e) => e.Name === "dev");
-            if (dev.length !== 1) {
-              throw new Error(`Expected exactly one dev environment, found ${dev.length}`);
-            }
-            config.environments = dev;
-            fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
-            console.log("Scoped packaging configuration to dev environment.");
-          '
-
-      - name: Package extension
+      - name: Package private extension
         run: npm run package -- --version "$PRIVATE_EXTENSION_VERSION" --noversiontransform
 
       - name: Install tfx-cli
-        if: ${{ !cancelled() }}
         run: npm install -g tfx-cli
-
-      - name: Show effective dev extension identity
-        env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
-        run: |
-          echo "Publisher: ${PUBLISHER_ID}"
-          echo "Base extension id: ${EXTENSION_ID}"
-          echo "Expected dev extension id: ${EXTENSION_ID}-dev"
-          node -e '
-            const fs = require("fs");
-            const manifest = JSON.parse(fs.readFileSync(".BuildOutput/dev/vss-extension.json", "utf8"));
-            console.log(`Packaged manifest publisher: ${manifest.publisher}`);
-            console.log(`Packaged manifest id: ${manifest.id}`);
-            console.log(`Packaged manifest version: ${manifest.version}`);
-          '
-
-      - name: Probe marketplace state for dev extension
-        env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
-          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
-        run: |
-          if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
-            echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping marketplace probe."
-            exit 0
-          fi
-          set +e
-          tfx extension show \
-            --publisher "$PUBLISHER_ID" \
-            --extension-id "${EXTENSION_ID}-dev" \
-            --service-url https://marketplace.visualstudio.com \
-            --token "$AZURE_DEVOPS_EXT_PAT"
-          status=$?
-          set -e
-          echo "tfx extension show exit code: $status"
-
-      - name: Locate VSIX
-        run: |
-          # Use the dev environment VSIX for private publishing.
-          # configuration.json is scoped to dev in this job, so packaging emits only
-          # the dev extension VSIX with the "-dev" extension-ID suffix.
-          VSIX_PATH=$(find .BuildOutput/dev -maxdepth 1 -name '*.vsix' | head -n 1)
-          if [[ -z "$VSIX_PATH" ]]; then
-            echo "No VSIX was generated."
-            exit 1
-          fi
-          echo "VSIX_PATH=$VSIX_PATH" >> "$GITHUB_ENV"
 
       - name: Publish private extension
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID || 'yarn-azure-devops-private' }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
-            echo "Required publish secrets are not configured. Skipping private extension publish."
+            echo "Required private publish secrets are not configured. Skipping private publish."
             exit 0
           fi
-          # Explicitly set publisher and extension ID to avoid mismatches between VSIX metadata
-          # and effective publish target. The dev lane appends "-dev" via configuration.json.
-          set +e
-          PUBLISH_OUTPUT=$(tfx extension publish \
+
+          VSIX_PATH=$(find .BuildOutput/dev -maxdepth 1 -name '*.vsix' | head -n 1)
+          if [[ -z "$VSIX_PATH" ]]; then
+            echo "No private VSIX found under .BuildOutput/dev."
+            exit 1
+          fi
+
+          tfx extension publish \
             --vsix "$VSIX_PATH" \
             --publisher "$PUBLISHER_ID" \
-            --extension-id "${EXTENSION_ID}-dev" \
+            --extension-id "${PRIVATE_EXTENSION_ID}-dev" \
             --override '{"public": false}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
             --share-with "$AZURE_DEVOPS_ORGS" \
-            --no-wait-validation 2>&1)
-          PUBLISH_EXIT=$?
-          set -e
+            --no-prompt
 
-          echo "$PUBLISH_OUTPUT"
-
-          if [[ $PUBLISH_EXIT -ne 0 ]]; then
-            if echo "$PUBLISH_OUTPUT" | grep -qiE "Request timeout|timed out|ETIMEDOUT"; then
-              echo "Private extension publish timed out; continuing so public release can proceed."
-              exit 0
-            fi
-            echo "Private extension publish failed with a non-timeout error."
-            exit $PUBLISH_EXIT
-          fi
-
-  # MegaLinter scan job (runs in parallel with build)
-  scan:
-    name: MegaLinter Scan
-    runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[MegaLinter]')"
-    continue-on-error: true
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
-          persist-credentials: true
-
-      - name: Install Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-        with:
-          node-version: "24.x"
-          check-latest: true
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run MegaLinter
-        run: |
-          git config --global user.email 'megalinter@megalinter.io'
-          git config --global user.name 'Megalinter runner'
-          npx mega-linter-runner -r v9 --fix --flavor ci_light
-        env:
-          APPLY_FIXES_EVENT: all
-          APPLY_FIXES_MODE: pull_request
-          AZURE_COMMENT_REPORTER: true
-          CI: true
-          DISABLE_ERRORS: true
-          TF_BUILD: false
-          SYSTEM_ACCESSTOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SYSTEM_COLLECTIONURI: ${{ github.server_url }}
-          SYSTEM_TEAMPROJECT: ${{ github.repository }}
-          BUILD_BUILD_ID: ${{ github.run_id }}
-          BUILD_REPOSITORY_ID: ${{ github.repository }}
-          VALIDATE_ALL_CODEBASE: false
-        working-directory: ${{ github.workspace }}
-
-      - name: Check if GITHUB_TOKEN is available
-        id: check-token
-        if: always()
-        run: |
-          if [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
-            echo "token_available=true" >> $GITHUB_OUTPUT
-          else
-            echo "token_available=false" >> $GITHUB_OUTPUT
-            echo "\u26a0\ufe0f GITHUB_TOKEN not available. PR creation will be skipped."
-          fi
-
-      - name: Create Pull Request with fixes
-        if: always() && steps.check-token.outputs.token_available == 'true'
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "[MegaLinter] Apply linter fixes"
-          title: "[MegaLinter] \U0001F527 Automated linter fixes"
-          body: |
-            ## Summary
-
-            This automated PR applies code style and linting fixes detected by MegaLinter.
-
-            ## Motivation / Context
-
-            MegaLinter detected issues that can be automatically fixed. This PR contains the applied fixes to maintain code quality and consistency.
-
-            ## How Has This Been Tested?
-
-            - Fixes were automatically applied by MegaLinter's auto-fix feature
-            - All enabled linters passed after applying fixes
-
-            ## Checklist
-
-            - [x] My code follows the style guidelines of this project
-            - [x] I have performed a self-review of my own code
-            - [x] My changes generate no new warnings
-          branch: megalinter-fixes
-          delete-branch: true
-          labels: |
-            automated
-            linting
-            megalinter
-
-      - name: Publish MegaLinter reports
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: megalinter-reports
-          path: ${{ github.workspace }}/megalinter-reports
-
-  # Public release job \u2014 gated on both build and scan
-  public_release:
-    name: Package and Publish Public Release
-    runs-on: ubuntu-latest
-    needs: [build, scan]
-    if: ${{ needs.build.result == 'success' && (needs.scan.result == 'success' || needs.scan.result == 'skipped') }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          fetch-depth: 0
-          persist-credentials: true
-
-      - name: Install GitVersion
-        if: ${{ !cancelled() }}
-        uses: gittools/actions/gitversion/setup@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
-        with:
-          versionSpec: "6.x"
-          preferLatestVersion: true
-
-      - name: Determine Version
-        if: ${{ !cancelled() }}
-        uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
-        with:
-          configFilePath: GitVersion.yml
-
-      - name: Export release version
-        run: |
-          echo "RELEASE_VERSION=${{ env.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
-          echo "RELEASE_TAG=v${{ env.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-        with:
-          node-version: "24.x"
-          check-latest: true
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build
-        run: npm run build
-
-      - name: Prepare extension and task manifests
-        env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
-          EXTENSION_NAME: ${{ vars.EXTENSION_NAME || 'Yarn for Azure DevOps' }}
-          EXTENSION_AUTHOR: ${{ vars.EXTENSION_AUTHOR || secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          TASK_YARN_NAME: ${{ vars.TASK_YARN_NAME || 'Yarn' }}
-          TASK_YARN_INSTALLER_NAME: ${{ vars.TASK_YARN_INSTALLER_NAME || 'YarnInstaller' }}
-          MANIFEST_VERSION: ${{ env.RELEASE_VERSION }}
+      - name: Prepare public manifests
         run: |
           node -e '
             const fs = require("fs");
-            const config = JSON.parse(fs.readFileSync("configuration.json", "utf8"));
-            const prod = config.environments.find((e) => e.Name === "production");
-            if (!prod) throw new Error("production environment not found in configuration.json");
-            const [major, minor, patch] = process.env.MANIFEST_VERSION.split(".").map((v) => Number.parseInt(v, 10));
+            const [major, minor, patch] = process.env.RELEASE_VERSION.split(".").map((v) => Number.parseInt(v, 10));
 
             const extensionFile = "Extension/vss-extension.json";
             const extensionManifest = JSON.parse(fs.readFileSync(extensionFile, "utf8"));
             extensionManifest.publisher = process.env.PUBLISHER_ID;
-            extensionManifest.id = process.env.EXTENSION_ID;
-            extensionManifest.name = process.env.EXTENSION_NAME;
-            extensionManifest.version = process.env.MANIFEST_VERSION;
+            extensionManifest.id = process.env.PUBLIC_EXTENSION_ID;
+            extensionManifest.name = process.env.PUBLIC_EXTENSION_NAME;
+            extensionManifest.version = process.env.RELEASE_VERSION;
             fs.writeFileSync(extensionFile, JSON.stringify(extensionManifest, null, 4) + "\n");
 
             const applyTaskManifest = (file, id, name) => {
@@ -389,209 +178,50 @@ jobs:
               fs.writeFileSync(file, JSON.stringify(manifest, null, 2) + "\n");
             };
 
-            applyTaskManifest("Tasks/Yarn/task.json", prod.TaskIds.Yarn, process.env.TASK_YARN_NAME);
-            applyTaskManifest("Tasks/YarnInstaller/task.json", prod.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
+            applyTaskManifest("Tasks/Yarn/task.json", process.env.PUBLIC_TASK_ID_YARN, process.env.TASK_YARN_NAME);
+            applyTaskManifest("Tasks/YarnInstaller/task.json", process.env.PUBLIC_TASK_ID_YARN_INSTALLER, process.env.TASK_YARN_INSTALLER_NAME);
           '
 
-      - name: Scope packaging config to production only
-        run: |
-          node -e '
-            const fs = require("fs");
-            const file = "configuration.json";
-            const config = JSON.parse(fs.readFileSync(file, "utf8"));
-            const prod = config.environments.filter((e) => e.Name === "production");
-            if (prod.length !== 1) {
-              throw new Error(`Expected exactly one production environment, found ${prod.length}`);
-            }
-            config.environments = prod;
-            fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
-            console.log("Scoped packaging configuration to production environment.");
-          '
-
-      - name: Package extension
+      - name: Package public extension
         run: npm run package -- --version "$RELEASE_VERSION" --noversiontransform
-
-      - name: Install tfx-cli
-        run: npm install -g tfx-cli
-
-      - name: Show effective production extension identity
-        env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
-        run: |
-          echo "Publisher: ${PUBLISHER_ID}"
-          echo "Expected production extension id: ${EXTENSION_ID}"
-          node -e '
-            const fs = require("fs");
-            const manifest = JSON.parse(fs.readFileSync(".BuildOutput/production/vss-extension.json", "utf8"));
-            console.log(`Packaged manifest publisher: ${manifest.publisher}`);
-            console.log(`Packaged manifest id: ${manifest.id}`);
-            console.log(`Packaged manifest version: ${manifest.version}`);
-          '
-
-      - name: Probe marketplace state for production extension
-        env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
-          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
-        run: |
-          if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
-            echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping marketplace probe."
-            exit 0
-          fi
-          set +e
-          tfx extension show \
-            --publisher "$PUBLISHER_ID" \
-            --extension-id "$EXTENSION_ID" \
-            --service-url https://marketplace.visualstudio.com \
-            --token "$AZURE_DEVOPS_EXT_PAT"
-          status=$?
-          set -e
-          echo "tfx extension show exit code: $status"
-
-      - name: Locate VSIX
-        run: |
-          # Use the production environment VSIX for public publishing.
-          # configuration.json is scoped to production in this job, so packaging emits only
-          # the production extension VSIX with production task GUIDs.
-          VSIX_PATH=$(find .BuildOutput/production -maxdepth 1 -name '*.vsix' | head -n 1)
-          if [[ -z "$VSIX_PATH" ]]; then
-            echo "No VSIX was generated."
-            exit 1
-          fi
-          echo "VSIX_PATH=$VSIX_PATH" >> "$GITHUB_ENV"
 
       - name: Publish public extension
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
-            echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping Marketplace publish."
+            echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping public publish."
             exit 0
           fi
-          # Explicitly set publisher and extension ID to avoid mismatches between VSIX metadata
-          # and effective publish target. --no-prompt is required for non-interactive CI.
-          set +e
-          PUBLISH_OUTPUT=$(tfx extension publish \
+
+          VSIX_PATH=$(find .BuildOutput/production -maxdepth 1 -name '*.vsix' | head -n 1)
+          if [[ -z "$VSIX_PATH" ]]; then
+            echo "No public VSIX found under .BuildOutput/production."
+            exit 1
+          fi
+
+          tfx extension publish \
             --vsix "$VSIX_PATH" \
             --publisher "$PUBLISHER_ID" \
-            --extension-id "$EXTENSION_ID" \
+            --extension-id "$PUBLIC_EXTENSION_ID" \
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
-            --no-prompt 2>&1)
-          PUBLISH_EXIT=$?
-          set -e
+            --no-prompt
 
-          echo "$PUBLISH_OUTPUT"
-
-          if [[ $PUBLISH_EXIT -ne 0 ]]; then
-            if echo "$PUBLISH_OUTPUT" | grep -qiE "Request timeout|timed out|ETIMEDOUT"; then
-              echo "Public extension publish timed out; failing fast so release can be retried."
-            elif echo "$PUBLISH_OUTPUT" | grep -qiE "already exists|forbidden|unauthorized|permission"; then
-              echo "Public extension publish failed due to identity/permission state. Check publisher ownership and PAT scope."
-            else
-              echo "Public extension publish failed with an unexpected error."
-            fi
-            exit $PUBLISH_EXIT
-          fi
-
-      - name: Install Extension to Azure DevOps Organizations
-        env:
-          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
-          AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID || 'DownAtTheBottomOfTheMoleHole' }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSIONID || 'yarn-azure-devops' }}
+      - name: Create and push tag
         run: |
-          if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
-            echo "AZURE_DEVOPS_EXT_PAT or AZURE_DEVOPS_ORGS not configured. Skipping org installation."
-            exit 0
-          fi
-          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-          IFS=',' read -ra ORGS <<< "$AZURE_DEVOPS_ORGS"
-          for org in "${ORGS[@]}"; do
-            echo "Installing extension to organization: $org"
-            az devops configure --defaults organization="https://dev.azure.com/$org"
-            az extension add --name azure-devops --allow-preview true || true
-            echo "$AZURE_DEVOPS_EXT_PAT" | az devops login
-            az devops extension install \
-              --publisher-id "$PUBLISHER_ID" \
-              --extension-id "$EXTENSION_ID" \
-              --org "https://dev.azure.com/$org" || echo "Extension may already be installed in $org"
-          done
-
-  # Tag and GitHub release job \u2014 runs after successful public release
-  new_release:
-    name: Create new tagged release
-    runs-on: ubuntu-latest
-    needs: public_release
-    if: ${{ needs.public_release.result == 'success' }}
-    timeout-minutes: 5
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          fetch-depth: 0
-
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
-        with:
-          versionSpec: "6.x"
-          preferLatestVersion: true
-
-      - name: Determine Version
-        uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
-        with:
-          configFilePath: GitVersion.yml
-
-      - name: Bump version and push tag
-        id: tag_version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          NEW_TAG="v${{ env.GitVersion_SemVer }}"
           git fetch --tags --force
-          PREVIOUS_TAG=$(git tag --sort=-v:refname | head -n 1 || echo "")
-          CHANGELOG=""
-          if [ -n "$PREVIOUS_TAG" ]; then
-            CHANGELOG=$(git log "${PREVIOUS_TAG}..HEAD" --pretty=format:"* %s (%h)" 2>/dev/null || echo "")
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$NEW_TAG" -m "$NEW_TAG"
-          git push origin "$NEW_TAG"
-          echo "new_tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
-          echo "previous_tag=${PREVIOUS_TAG}" >> "$GITHUB_OUTPUT"
-          {
-            echo "changelog<<EOF"
-            echo "$CHANGELOG"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          git tag -a "$RELEASE_TAG" -m "$RELEASE_TAG"
+          git push origin "$RELEASE_TAG"
 
-      - name: Generate Release Notes
-        id: release_notes
-        run: |
-          echo "## What's New in ${{ steps.tag_version.outputs.new_tag }}" > release_notes.md
-          echo "" >> release_notes.md
-          echo "### \U0001F680 Yarn Azure DevOps Extension" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "This release provides the Yarn Classic and Yarn 2+ tasks for Azure DevOps pipelines." >> release_notes.md
-          echo "" >> release_notes.md
-          echo "### \U0001F4DD Changelog" >> release_notes.md
-          echo "${{ steps.tag_version.outputs.changelog }}" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "---" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.tag_version.outputs.previous_tag }}...${{ steps.tag_version.outputs.new_tag }}" >> release_notes.md
-
-      - name: Create a GitHub release
+      - name: Create GitHub release
         uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
         with:
           allowUpdates: true
-          bodyFile: release_notes.md
-          generateReleaseNotes: false
+          generateReleaseNotes: true
           makeLatest: true
-          name: Release ${{ steps.tag_version.outputs.new_tag }}
-          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.set_release_vars.outputs.release_tag }}
+          tag: ${{ steps.set_release_vars.outputs.release_tag }}
