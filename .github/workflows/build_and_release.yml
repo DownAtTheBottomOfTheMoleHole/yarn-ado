@@ -18,6 +18,18 @@ jobs:
   build:
     name: Build, Test and Publish Private Extension
     runs-on: ubuntu-latest
+    env:
+      PUBLISHER_ID: ${{ secrets.PUBLISHER_ID }}
+      PUBLIC_EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
+      PRIVATE_EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSION_ID }}
+      PUBLIC_EXTENSION_NAME: ${{ secrets.PUBLIC_EXTENSION_NAME }}
+      PRIVATE_EXTENSION_NAME: ${{ secrets.PRIVATE_EXTENSION_NAME }}
+      TASK_YARN_NAME: ${{ secrets.TASK_YARN_NAME }}
+      TASK_YARN_INSTALLER_NAME: ${{ secrets.TASK_YARN_INSTALLER_NAME }}
+      PUBLIC_TASK_ID_YARN: ${{ secrets.PUBLIC_TASK_ID_YARN }}
+      PUBLIC_TASK_ID_YARN_INSTALLER: ${{ secrets.PUBLIC_TASK_ID_YARN_INSTALLER }}
+      PRIVATE_TASK_ID_YARN: ${{ secrets.PRIVATE_TASK_ID_YARN }}
+      PRIVATE_TASK_ID_YARN_INSTALLER: ${{ secrets.PRIVATE_TASK_ID_YARN_INSTALLER }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -42,7 +54,7 @@ jobs:
         run: |
           # Use epoch minutes for private extension builds to maintain monotonic increase
           # and compatibility with PR builds (which also use epoch minutes).
-          # Both PR and main branch builds publish to the same PRIVATE_EXTENSIONID,
+          # Both PR and main branch builds publish to the same PRIVATE_EXTENSION_ID,
           # so they must use the same versioning scheme to avoid conflicts.
           EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
           PRIVATE_EXT_VERSION="${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${EPOCH_MINUTES}"
@@ -73,59 +85,6 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run test:no-build
 
-      - name: Prepare extension and task manifests
-        env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID }}
-          EXTENSION_NAME: ${{ secrets.PRIVATE_EXTENSION_NAME }}
-          EXTENSION_AUTHOR: ${{ secrets.EXTENSION_AUTHOR }}
-          TASK_YARN_NAME: ${{ secrets.TASK_YARN_NAME }}
-          TASK_YARN_INSTALLER_NAME: ${{ secrets.TASK_YARN_INSTALLER_NAME }}
-          MANIFEST_VERSION: ${{ env.PRIVATE_EXTENSION_VERSION }}
-        run: |
-          node -e '
-            const fs = require("fs");
-            const config = JSON.parse(fs.readFileSync("configuration.json", "utf8"));
-            const dev = config.environments.find((e) => e.Name === "dev");
-            if (!dev) throw new Error("dev environment not found in configuration.json");
-            const [major, minor, patch] = process.env.MANIFEST_VERSION.split(".").map((v) => Number.parseInt(v, 10));
-
-            const extensionFile = "Extension/vss-extension.json";
-            const extensionManifest = JSON.parse(fs.readFileSync(extensionFile, "utf8"));
-            extensionManifest.publisher = process.env.PUBLISHER_ID;
-            extensionManifest.id = process.env.EXTENSION_ID;
-            extensionManifest.name = process.env.EXTENSION_NAME;
-            extensionManifest.version = process.env.MANIFEST_VERSION;
-            fs.writeFileSync(extensionFile, JSON.stringify(extensionManifest, null, 4) + "\n");
-
-            const applyTaskManifest = (file, id, name) => {
-              const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
-              manifest.id = id;
-              manifest.name = name;
-              manifest.author = process.env.EXTENSION_AUTHOR;
-              manifest.version = { Major: major, Minor: minor, Patch: patch };
-              fs.writeFileSync(file, JSON.stringify(manifest, null, 2) + "\n");
-            };
-
-            applyTaskManifest("Tasks/Yarn/task.json", dev.TaskIds.Yarn, process.env.TASK_YARN_NAME);
-            applyTaskManifest("Tasks/YarnInstaller/task.json", dev.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
-          '
-
-      - name: Scope packaging config to dev only
-        run: |
-          node -e '
-            const fs = require("fs");
-            const file = "configuration.json";
-            const config = JSON.parse(fs.readFileSync(file, "utf8"));
-            const dev = config.environments.filter((e) => e.Name === "dev");
-            if (dev.length !== 1) {
-              throw new Error(`Expected exactly one dev environment, found ${dev.length}`);
-            }
-            config.environments = dev;
-            fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
-            console.log("Scoped packaging configuration to dev environment.");
-          '
-
       - name: Package extension
         run: npm run package -- --version "$PRIVATE_EXTENSION_VERSION" --noversiontransform
 
@@ -135,8 +94,8 @@ jobs:
 
       - name: Show effective dev extension identity
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHER_ID }}
+          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSION_ID }}
         run: |
           echo "Publisher: ${PUBLISHER_ID}"
           echo "Base extension id: ${EXTENSION_ID}"
@@ -151,8 +110,8 @@ jobs:
 
       - name: Probe marketplace state for dev extension
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID }}
+          PUBLISHER_ID: ${{ vars.PUBLISHER_ID }}
+          EXTENSION_ID: ${{ vars.PRIVATE_EXTENSION_ID }}
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
@@ -185,8 +144,8 @@ jobs:
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
-          EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSIONID }}
+          PUBLISHER_ID: ${{ vars.PUBLISHER_ID }}
+          EXTENSION_ID: ${{ vars.PRIVATE_EXTENSION_ID }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
             echo "Required publish secrets are not configured. Skipping private extension publish."
@@ -321,6 +280,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, scan]
     if: ${{ needs.build.result == 'success' && (needs.scan.result == 'success' || needs.scan.result == 'skipped') }}
+    env:
+      PUBLISHER_ID: ${{ secrets.PUBLISHER_ID }}
+      PUBLIC_EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
+      PRIVATE_EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSION_ID }}
+      PUBLIC_EXTENSION_NAME: ${{ secrets.PUBLIC_EXTENSION_NAME }}
+      PRIVATE_EXTENSION_NAME: ${{ secrets.PRIVATE_EXTENSION_NAME }}
+      TASK_YARN_NAME: ${{ secrets.TASK_YARN_NAME }}
+      TASK_YARN_INSTALLER_NAME: ${{ secrets.TASK_YARN_INSTALLER_NAME }}
+      PUBLIC_TASK_ID_YARN: ${{ secrets.PUBLIC_TASK_ID_YARN }}
+      PUBLIC_TASK_ID_YARN_INSTALLER: ${{ secrets.PUBLIC_TASK_ID_YARN_INSTALLER }}
+      PRIVATE_TASK_ID_YARN: ${{ secrets.PRIVATE_TASK_ID_YARN }}
+      PRIVATE_TASK_ID_YARN_INSTALLER: ${{ secrets.PRIVATE_TASK_ID_YARN_INSTALLER }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -358,59 +329,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Prepare extension and task manifests
-        env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
-          EXTENSION_NAME: ${{ secrets.PUBLIC_EXTENSION_NAME }}
-          EXTENSION_AUTHOR: ${{ secrets.EXTENSION_AUTHOR }}
-          TASK_YARN_NAME: ${{ secrets.TASK_YARN_NAME }}
-          TASK_YARN_INSTALLER_NAME: ${{ secrets.TASK_YARN_INSTALLER_NAME }}
-          MANIFEST_VERSION: ${{ env.RELEASE_VERSION }}
-        run: |
-          node -e '
-            const fs = require("fs");
-            const config = JSON.parse(fs.readFileSync("configuration.json", "utf8"));
-            const prod = config.environments.find((e) => e.Name === "production");
-            if (!prod) throw new Error("production environment not found in configuration.json");
-            const [major, minor, patch] = process.env.MANIFEST_VERSION.split(".").map((v) => Number.parseInt(v, 10));
-
-            const extensionFile = "Extension/vss-extension.json";
-            const extensionManifest = JSON.parse(fs.readFileSync(extensionFile, "utf8"));
-            extensionManifest.publisher = process.env.PUBLISHER_ID;
-            extensionManifest.id = process.env.EXTENSION_ID;
-            extensionManifest.name = process.env.EXTENSION_NAME;
-            extensionManifest.version = process.env.MANIFEST_VERSION;
-            fs.writeFileSync(extensionFile, JSON.stringify(extensionManifest, null, 4) + "\n");
-
-            const applyTaskManifest = (file, id, name) => {
-              const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
-              manifest.id = id;
-              manifest.name = name;
-              manifest.author = process.env.EXTENSION_AUTHOR;
-              manifest.version = { Major: major, Minor: minor, Patch: patch };
-              fs.writeFileSync(file, JSON.stringify(manifest, null, 2) + "\n");
-            };
-
-            applyTaskManifest("Tasks/Yarn/task.json", prod.TaskIds.Yarn, process.env.TASK_YARN_NAME);
-            applyTaskManifest("Tasks/YarnInstaller/task.json", prod.TaskIds.YarnInstaller, process.env.TASK_YARN_INSTALLER_NAME);
-          '
-
-      - name: Scope packaging config to production only
-        run: |
-          node -e '
-            const fs = require("fs");
-            const file = "configuration.json";
-            const config = JSON.parse(fs.readFileSync(file, "utf8"));
-            const prod = config.environments.filter((e) => e.Name === "production");
-            if (prod.length !== 1) {
-              throw new Error(`Expected exactly one production environment, found ${prod.length}`);
-            }
-            config.environments = prod;
-            fs.writeFileSync(file, JSON.stringify(config, null, 2) + "\n");
-            console.log("Scoped packaging configuration to production environment.");
-          '
-
       - name: Package extension
         run: npm run package -- --version "$RELEASE_VERSION" --noversiontransform
 
@@ -419,7 +337,7 @@ jobs:
 
       - name: Show effective production extension identity
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHER_ID }}
           EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
         run: |
           echo "Publisher: ${PUBLISHER_ID}"
@@ -434,7 +352,7 @@ jobs:
 
       - name: Probe marketplace state for production extension
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHER_ID }}
           EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
         run: |
@@ -467,7 +385,7 @@ jobs:
       - name: Publish public extension
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
+          PUBLISHER_ID: ${{ secrets.PUBLISHER_ID }}
           EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
@@ -508,8 +426,8 @@ jobs:
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
           AZURE_DEVOPS_ORGS: ${{ secrets.AZURE_DEVOPS_ORGS }}
-          PUBLISHER_ID: ${{ secrets.PUBLISHERID }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ vars.PUBLISHER_ID }}
+          EXTENSION_ID: ${{ vars.PUBLIC_EXTENSION_ID }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" || -z "$AZURE_DEVOPS_ORGS" ]]; then
             echo "AZURE_DEVOPS_EXT_PAT or AZURE_DEVOPS_ORGS not configured. Skipping org installation."
