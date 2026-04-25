@@ -27,12 +27,20 @@ const findEntryKeyForPackage = (pkgName) => {
 };
 
 const findInstalledPathForPackage = (pkgName) => {
-  const entryKey = findEntryKeyForPackage(pkgName);
-  if (!entryKey) {
-    return undefined;
-  }
+  const suffix = `/node_modules/${pkgName}`;
+  const direct = `node_modules/${pkgName}`;
 
-  return path.join(repoRoot, entryKey);
+  const matches = Object.keys(packageEntries)
+    .filter((key) => key === direct || key.endsWith(suffix))
+    .sort((a, b) => a.split("/").length - b.split("/").length);
+
+  for (const key of matches) {
+    const fullPath = path.join(repoRoot, key);
+    if (fs.existsSync(fullPath)) {
+      return fullPath;
+    }
+  }
+  return undefined;
 };
 
 const taskRuntimeDeps = {
