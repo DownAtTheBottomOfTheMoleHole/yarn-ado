@@ -258,3 +258,4 @@ Tasks/*/common/**/*.*
 .BuildOutput
 .DS_Store
 test-results/**/*.*
+.github/*.env
