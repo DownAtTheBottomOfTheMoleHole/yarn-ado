@@ -409,6 +409,7 @@ jobs:
             --override '{"public": true}' \
             --service-url https://marketplace.visualstudio.com \
             --token "$AZURE_DEVOPS_EXT_PAT" \
+            --no-wait-validation \
             --no-prompt 2>&1)
           PUBLISH_EXIT=$?
           set -e
