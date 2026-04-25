@@ -37,11 +37,9 @@ const extensionDirectory = path.join(currentDirectory, "Extension");
 const tasksDirectory = path.join(currentDirectory, "Tasks");
 
 // Lock-file and generated artefact names to exclude when copying task source.
-const EXCLUDED_TASK_ITEMS = new Set([
-  "node_modules",
-  "package-lock.json",
-  "yarn.lock",
-]);
+// node_modules are pre-populated by sync-task-node-modules.js during `npm install`
+// and are intentionally included in the copy so the VSIX bundles them.
+const EXCLUDED_TASK_ITEMS = new Set(["package-lock.json", "yarn.lock"]);
 
 fs.ensureDirSync(buildOutputDirectory);
 
@@ -154,22 +152,12 @@ for (const env of configuration.environments) {
         properties: { name: `Tasks/${taskDir.name}` },
       });
 
-      // Install only production dependencies into the task output directory.
-      // The output directory is outside the workspace glob paths, so npm treats
-      // it as a standalone package and produces no lock file.
-      console.log(`Installing production dependencies for ${taskDir.name}...`);
-      const npmInstallResult = spawnSync(
-        "npm",
-        ["install", "--omit=dev", "--no-package-lock"],
-        {
-          cwd: taskDir.directory,
-          stdio: "inherit",
-          shell: false,
-        },
-      );
-      if (npmInstallResult.status !== 0) {
+      // Verify that node_modules were copied from the task source directory.
+      // They are pre-populated by sync-task-node-modules.js during `npm install`.
+      const outputNodeModules = path.join(taskDir.directory, "node_modules");
+      if (!fs.existsSync(outputNodeModules)) {
         throw new Error(
-          `npm install failed for ${taskDir.name} (exit ${npmInstallResult.status})`,
+          `node_modules missing for ${taskDir.name}. Run \`npm install\` at the repo root first to sync production dependencies.`,
         );
       }
     } else {
