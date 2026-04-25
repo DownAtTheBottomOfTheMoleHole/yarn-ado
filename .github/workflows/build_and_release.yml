@@ -176,6 +176,10 @@ jobs:
               echo "Private extension publish timed out; continuing so public release can proceed."
               exit 0
             fi
+            if echo "$PUBLISH_OUTPUT" | grep -qiE "The extension already exists|extension already exists"; then
+              echo "Private extension already exists in marketplace; treating as non-fatal so public release can proceed."
+              exit 0
+            fi
             echo "Private extension publish failed with a non-timeout error."
             exit $PUBLISH_EXIT
           fi
