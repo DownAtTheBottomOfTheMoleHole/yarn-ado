@@ -1,28 +1,20 @@
 {
-  "id": "57066373-3f34-492b-941a-d66dd6b079c4",
+  "id": "#{taskYarnId}#",
   "name": "Yarn",
   "friendlyName": "ms-resource:loc.friendlyName",
   "description": "ms-resource:loc.description",
   "helpMarkDown": "ms-resource:loc.helpMarkDown",
   "category": "Utility",
   "author": "DownAtTheBottomOfTheMoleHole",
-  "visibility": [
-    "Build",
-    "Release"
-  ],
+  "visibility": ["Build", "Release"],
   "version": {
     "Major": 1,
     "Minor": 0,
     "Patch": 0
   },
   "preview": true,
-  "runsOn": [
-    "Agent",
-    "DeploymentGroup"
-  ],
-  "demands": [
-    "yarn"
-  ],
+  "runsOn": ["Agent", "DeploymentGroup"],
+  "demands": ["yarn"],
   "minimumAgentVersion": "1.91.0",
   "instanceNameFormat": "ms-resource:loc.instanceNameFormat",
   "groups": [
