@@ -77,21 +77,26 @@ if (!fs.existsSync(configurationPath)) {
 const configuration = JSON.parse(fs.readFileSync(configurationPath, "utf8"));
 const version = getExtensionVersion();
 
-const publisherId =
-  process.env.PUBLISHER_ID ||
-  process.env.PUBLISHERID ||
-  "DownAtTheBottomOfTheMoleHole";
-const publicExtensionId = process.env.PUBLIC_EXTENSION_ID || "yarn-ado";
-const privateExtensionId =
-  process.env.PRIVATE_EXTENSION_ID ||
-  process.env.PRIVATE_EXTENSIONID ||
-  "yarn-ado-private";
-const publicExtensionName = process.env.PUBLIC_EXTENSION_NAME || "yarn-ado";
-const privateExtensionName =
-  process.env.PRIVATE_EXTENSION_NAME || "yarn-ado private";
-const taskYarnName = process.env.TASK_YARN_NAME || "Yarn";
-const taskYarnInstallerName =
-  process.env.TASK_YARN_INSTALLER_NAME || "YarnInstaller";
+const readEnv = (...names) => {
+  for (const name of names) {
+    const value = process.env[name];
+    if (typeof value === "string" && value.trim() !== "") {
+      return value.trim();
+    }
+  }
+
+  throw new Error(
+    `Missing required environment variable. Expected one of: ${names.join(", ")}`,
+  );
+};
+
+const publisherId = readEnv("PUBLISHER_ID");
+const publicExtensionId = readEnv("PUBLIC_EXTENSION_ID");
+const privateExtensionId = readEnv("PRIVATE_EXTENSION_ID");
+const publicExtensionName = readEnv("PUBLIC_EXTENSION_NAME");
+const privateExtensionName = readEnv("PRIVATE_EXTENSION_NAME");
+const taskYarnName = readEnv("TASK_YARN_NAME");
+const taskYarnInstallerName = readEnv("TASK_YARN_INSTALLER_NAME");
 
 const resolveToken = (value, replacements) => {
   if (typeof value !== "string") {
