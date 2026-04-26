@@ -6,7 +6,7 @@ async function httpsGet(
   url: string,
   headers?: Record<string, string>,
 ): Promise<IncomingMessage> {
-  const deferal = q.defer<IncomingMessage>();
+  const deferred = q.defer<IncomingMessage>();
 
   const options: https.RequestOptions = {};
 
@@ -31,13 +31,13 @@ async function httpsGet(
 
   https
     .get(url, options, (response: IncomingMessage) => {
-      deferal.resolve(response);
+      deferred.resolve(response);
     })
     .on("error", (err: Error) => {
-      deferal.reject(err);
+      deferred.reject(err);
     });
 
-  return deferal.promise as unknown as Promise<IncomingMessage>;
+  return await deferred.promise;
 }
 
 export async function downloadFrom(
