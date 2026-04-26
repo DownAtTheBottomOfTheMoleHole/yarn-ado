@@ -285,17 +285,17 @@ jobs:
     needs: [build, scan]
     if: ${{ needs.build.result == 'success' && (needs.scan.result == 'success' || needs.scan.result == 'skipped') }}
     env:
-      PUBLISHER_ID: ${{ secrets.PUBLISHER_ID }}
-      PUBLIC_EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
-      PRIVATE_EXTENSION_ID: ${{ secrets.PRIVATE_EXTENSION_ID }}
-      PUBLIC_EXTENSION_NAME: ${{ secrets.PUBLIC_EXTENSION_NAME }}
-      PRIVATE_EXTENSION_NAME: ${{ secrets.PRIVATE_EXTENSION_NAME }}
-      TASK_YARN_NAME: ${{ secrets.TASK_YARN_NAME }}
-      TASK_YARN_INSTALLER_NAME: ${{ secrets.TASK_YARN_INSTALLER_NAME }}
-      PUBLIC_TASK_ID_YARN: ${{ secrets.PUBLIC_TASK_ID_YARN }}
-      PUBLIC_TASK_ID_YARN_INSTALLER: ${{ secrets.PUBLIC_TASK_ID_YARN_INSTALLER }}
-      PRIVATE_TASK_ID_YARN: ${{ secrets.PRIVATE_TASK_ID_YARN }}
-      PRIVATE_TASK_ID_YARN_INSTALLER: ${{ secrets.PRIVATE_TASK_ID_YARN_INSTALLER }}
+      PUBLISHER_ID: ${{ vars.PUBLISHER_ID || secrets.PUBLISHER_ID }}
+      PUBLIC_EXTENSION_ID: ${{ vars.PUBLIC_EXTENSION_ID || secrets.PUBLIC_EXTENSION_ID }}
+      PRIVATE_EXTENSION_ID: ${{ vars.PRIVATE_EXTENSION_ID || secrets.PRIVATE_EXTENSION_ID }}
+      PUBLIC_EXTENSION_NAME: ${{ vars.PUBLIC_EXTENSION_NAME || secrets.PUBLIC_EXTENSION_NAME }}
+      PRIVATE_EXTENSION_NAME: ${{ vars.PRIVATE_EXTENSION_NAME || secrets.PRIVATE_EXTENSION_NAME }}
+      TASK_YARN_NAME: ${{ vars.TASK_YARN_NAME || secrets.TASK_YARN_NAME }}
+      TASK_YARN_INSTALLER_NAME: ${{ vars.TASK_YARN_INSTALLER_NAME || secrets.TASK_YARN_INSTALLER_NAME }}
+      PUBLIC_TASK_ID_YARN: ${{ vars.PUBLIC_TASK_ID_YARN || secrets.PUBLIC_TASK_ID_YARN }}
+      PUBLIC_TASK_ID_YARN_INSTALLER: ${{ vars.PUBLIC_TASK_ID_YARN_INSTALLER || secrets.PUBLIC_TASK_ID_YARN_INSTALLER }}
+      PRIVATE_TASK_ID_YARN: ${{ vars.PRIVATE_TASK_ID_YARN || secrets.PRIVATE_TASK_ID_YARN }}
+      PRIVATE_TASK_ID_YARN_INSTALLER: ${{ vars.PRIVATE_TASK_ID_YARN_INSTALLER || secrets.PRIVATE_TASK_ID_YARN_INSTALLER }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -341,11 +341,11 @@ jobs:
 
       - name: Show effective production extension identity
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHER_ID }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ vars.PUBLISHER_ID || secrets.PUBLISHER_ID }}
+          EXTENSION_ID: ${{ vars.PUBLIC_EXTENSION_ID || secrets.PUBLIC_EXTENSION_ID }}
         run: |
-          echo "Publisher: ${PUBLISHER_ID}"
-          echo "Expected production extension id: ${EXTENSION_ID}"
+          echo "Configured publisher: ${PUBLISHER_ID}"
+          echo "Configured production extension id: ${EXTENSION_ID}"
           node -e '
             const fs = require("fs");
             const manifest = JSON.parse(fs.readFileSync(".BuildOutput/production/vss-extension.json", "utf8"));
@@ -356,8 +356,8 @@ jobs:
 
       - name: Probe marketplace state for production extension
         env:
-          PUBLISHER_ID: ${{ secrets.PUBLISHER_ID }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ vars.PUBLISHER_ID || secrets.PUBLISHER_ID }}
+          EXTENSION_ID: ${{ vars.PUBLIC_EXTENSION_ID || secrets.PUBLIC_EXTENSION_ID }}
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
@@ -365,13 +365,14 @@ jobs:
             exit 0
           fi
           set +e
-          tfx extension show \
+          PROBE_OUTPUT=$(tfx extension show \
             --publisher "$PUBLISHER_ID" \
             --extension-id "$EXTENSION_ID" \
             --service-url https://marketplace.visualstudio.com \
-            --token "$AZURE_DEVOPS_EXT_PAT"
+            --token "$AZURE_DEVOPS_EXT_PAT" 2>&1)
           status=$?
           set -e
+          echo "$PROBE_OUTPUT"
           echo "tfx extension show exit code: $status"
 
       - name: Locate VSIX
@@ -389,8 +390,8 @@ jobs:
       - name: Publish public extension
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
-          PUBLISHER_ID: ${{ secrets.PUBLISHER_ID }}
-          EXTENSION_ID: ${{ secrets.PUBLIC_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ vars.PUBLISHER_ID || secrets.PUBLISHER_ID }}
+          EXTENSION_ID: ${{ vars.PUBLIC_EXTENSION_ID || secrets.PUBLIC_EXTENSION_ID }}
         run: |
           if [[ -z "$AZURE_DEVOPS_EXT_PAT" ]]; then
             echo "AZURE_DEVOPS_EXT_PAT is not configured. Skipping Marketplace publish."
@@ -399,7 +400,20 @@ jobs:
 
           PACKAGED_PUBLISHER=$(node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync(".BuildOutput/production/vss-extension.json","utf8"));process.stdout.write(m.publisher);')
           PACKAGED_EXTENSION_ID=$(node -e 'const fs=require("fs");const m=JSON.parse(fs.readFileSync(".BuildOutput/production/vss-extension.json","utf8"));process.stdout.write(m.id);')
-          echo "Publishing public extension id: ${PACKAGED_EXTENSION_ID}"
+          echo "Configured publisher for publish: ${PUBLISHER_ID}"
+          echo "Configured extension id for publish: ${EXTENSION_ID}"
+          echo "Packaged publisher for publish: ${PACKAGED_PUBLISHER}"
+          echo "Packaged extension id for publish: ${PACKAGED_EXTENSION_ID}"
+
+          if [[ "$PUBLISHER_ID" != "$PACKAGED_PUBLISHER" ]]; then
+            echo "Publisher mismatch between configured value and packaged manifest."
+            exit 1
+          fi
+
+          if [[ "$EXTENSION_ID" != "$PACKAGED_EXTENSION_ID" ]]; then
+            echo "Extension ID mismatch between configured value and packaged manifest."
+            exit 1
+          fi
 
           set +e
           PUBLISH_OUTPUT=$(tfx extension publish \
@@ -417,13 +431,7 @@ jobs:
           echo "$PUBLISH_OUTPUT"
 
           if [[ $PUBLISH_EXIT -ne 0 ]]; then
-            if echo "$PUBLISH_OUTPUT" | grep -qiE "Request timeout|timed out|ETIMEDOUT"; then
-              echo "Public extension publish timed out; failing fast so release can be retried."
-            elif echo "$PUBLISH_OUTPUT" | grep -qiE "already exists|forbidden|unauthorized|permission"; then
-              echo "Public extension publish failed due to identity/permission state. Check publisher ownership and PAT scope."
-            else
-              echo "Public extension publish failed with an unexpected error."
-            fi
+            echo "Public extension publish failed (exit code: $PUBLISH_EXIT)."
             exit $PUBLISH_EXIT
           fi
 
