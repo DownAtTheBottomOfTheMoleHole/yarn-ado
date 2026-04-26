@@ -1,18 +1,19 @@
 {
-    "compilerOptions": {
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "ignoreDeprecations": "5.0",
-        "noImplicitAny": true,
-        "removeComments": true,
-        "preserveConstEnums": true,
-        "target": "ES2024",
-        "lib": ["ES2024"],
-        "sourceMap": false,
-        "inlineSourceMap": true,
-        "declaration": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true
-    }
-   
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strictNullChecks": false,
+    "useUnknownInCatchVariables": false,
+    "types": ["node", "jasmine"],
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "sourceMap": false,
+    "inlineSourceMap": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  }
 }

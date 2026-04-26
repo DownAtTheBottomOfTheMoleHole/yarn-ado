@@ -3,10 +3,10 @@
 [![Visual Studio Marketplace](https://img.shields.io/badge/Marketplace-yarn--ado-blue?logo=azuredevops)](https://marketplace.visualstudio.com/items?itemName=DownAtTheBottomOfTheMoleHole.yarn-ado)
 [![PR Code Validation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/actions/workflows/pr-code-validation.yml/badge.svg)](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/actions/workflows/pr-code-validation.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24-green)](https://nodejs.org/)
 
-Azure DevOps extension for Yarn Classic and modern Yarn 2+ workflows in Azure Pipelines.
+Azure DevOps extension for modern Yarn and Yarn Classic workflows in Azure Pipelines.
 
 > This fork exists to keep Yarn usable in modern Azure DevOps pipelines for both Yarn Classic and Yarn 2+ and later workflows.
 
@@ -19,7 +19,22 @@ Azure DevOps extension for Yarn Classic and modern Yarn 2+ workflows in Azure Pi
 
 ## Quick Start
 
-Use the built-in installer for Yarn Classic releases:
+Use the built-in installer for the latest stable modern Yarn release:
+
+```yaml
+steps:
+  - task: YarnInstaller@1
+    displayName: Use latest stable Yarn
+    inputs:
+      versionSpec: stable
+
+  - task: Yarn@1
+    displayName: Install dependencies
+    inputs:
+      arguments: install --immutable
+```
+
+If you need Yarn Classic, request it explicitly:
 
 ```yaml
 steps:
@@ -34,7 +49,7 @@ steps:
       arguments: install --frozen-lockfile
 ```
 
-Use the built-in installer for Yarn 2+ through Corepack:
+Use the built-in installer for a pinned modern Yarn version through Corepack:
 
 ```yaml
 steps:
@@ -49,7 +64,7 @@ steps:
       arguments: install --immutable
 ```
 
-For Yarn 2+ and later, the task enables Corepack and activates the requested Yarn version on your behalf.
+By default, the task enables Corepack and activates the latest stable Yarn release on your behalf.
 
 The intended model is:
 
@@ -68,10 +83,10 @@ Registry and authentication options are available directly in the task UI:
 
 ## Included Tasks
 
-| Task | Purpose |
-| --- | --- |
-| `YarnInstaller` | Installs official Yarn Classic releases or activates Yarn 2+ through Corepack and adds Yarn to the agent PATH |
-| `Yarn` | Runs Yarn commands and can inject credentials for Azure Artifacts or external npm registries |
+| Task            | Purpose                                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------------------------- |
+| `YarnInstaller` | Installs modern Yarn via Corepack (stable by default) or Yarn Classic on request; adds Yarn to agent PATH |
+| `Yarn`          | Runs Yarn commands and can inject credentials for Azure Artifacts or external npm registries              |
 
 ## Compatibility
 

@@ -13,6 +13,7 @@ describe("Yarn Installer version routing", () => {
       expect(shouldUseCorepackForVersionSpec("4.6.0")).toBeTrue();
       expect(shouldUseCorepackForVersionSpec(">=2.0.0")).toBeTrue();
       expect(shouldUseCorepackForVersionSpec("berry")).toBeTrue();
+      expect(shouldUseCorepackForVersionSpec("stable")).toBeTrue();
     });
   });
 });

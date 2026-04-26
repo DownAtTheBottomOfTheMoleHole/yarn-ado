@@ -1,13 +1,12 @@
 import * as https from "https";
-import { HttpsProxyAgent } from "https-proxy-agent";
 import * as q from "q";
 import { IncomingMessage } from "http";
 
-function httpsGet(
+async function httpsGet(
   url: string,
   headers?: Record<string, string>,
-): PromiseLike<IncomingMessage> {
-  const deferal = q.defer<IncomingMessage>();
+): Promise<IncomingMessage> {
+  const deferred = q.defer<IncomingMessage>();
 
   const options: https.RequestOptions = {};
 
@@ -18,6 +17,7 @@ function httpsGet(
     process.env.http_proxy;
 
   if (proxy !== null && proxy !== undefined) {
+    const { HttpsProxyAgent } = await import("https-proxy-agent");
     options.agent = new HttpsProxyAgent(
       proxy,
     ) as unknown as https.RequestOptions["agent"];
@@ -31,13 +31,13 @@ function httpsGet(
 
   https
     .get(url, options, (response: IncomingMessage) => {
-      deferal.resolve(response);
+      deferred.resolve(response);
     })
     .on("error", (err: Error) => {
-      deferal.reject(err);
+      deferred.reject(err);
     });
 
-  return deferal.promise;
+  return await deferred.promise;
 }
 
 export async function downloadFrom(
