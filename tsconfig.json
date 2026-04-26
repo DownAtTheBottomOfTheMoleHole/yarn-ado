@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "ignoreDeprecations": "5.0",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "ignoreDeprecations": "6.0",
+    "strictNullChecks": false,
+    "useUnknownInCatchVariables": false,
+    "types": ["node", "jasmine"],
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
