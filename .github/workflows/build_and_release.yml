@@ -45,6 +45,7 @@ jobs:
           preferLatestVersion: true
 
       - name: Determine Version
+        id: determine_version
         if: ${{ !cancelled() }}
         uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
         with:
@@ -57,9 +58,9 @@ jobs:
           # Both PR and main branch builds publish to the same PRIVATE_EXTENSION_ID,
           # so they must use the same versioning scheme to avoid conflicts.
           EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
-          PRIVATE_EXT_VERSION="${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${EPOCH_MINUTES}"
+          PRIVATE_EXT_VERSION="${{ steps.determine_version.outputs.GitVersion_Major }}.${{ steps.determine_version.outputs.GitVersion_Minor }}.${EPOCH_MINUTES}"
           echo "PRIVATE_EXTENSION_VERSION=$PRIVATE_EXT_VERSION" >> "$GITHUB_ENV"
-          echo "RELEASE_VERSION=${{ env.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${{ steps.determine_version.outputs.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
           echo "Building private extension version: $PRIVATE_EXT_VERSION"
 
       - name: Setup Node.js
@@ -311,6 +312,7 @@ jobs:
           preferLatestVersion: true
 
       - name: Determine Version
+        id: determine_version
         if: ${{ !cancelled() }}
         uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
         with:
@@ -318,8 +320,8 @@ jobs:
 
       - name: Export release version
         run: |
-          echo "RELEASE_VERSION=${{ env.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
-          echo "RELEASE_TAG=v${{ env.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${{ steps.determine_version.outputs.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=v${{ steps.determine_version.outputs.GitVersion_MajorMinorPatch }}" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
@@ -479,6 +481,7 @@ jobs:
           preferLatestVersion: true
 
       - name: Determine Version
+        id: determine_version
         uses: gittools/actions/gitversion/execute@bc6623af8fc07d5a8903052dd46da33403eec8e8 # v4.5.0
         with:
           configFilePath: GitVersion.yml
@@ -488,7 +491,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          NEW_TAG="v${{ env.GitVersion_SemVer }}"
+          NEW_TAG="v${{ steps.determine_version.outputs.GitVersion_SemVer }}"
           git fetch --tags --force
           PREVIOUS_TAG=$(git tag --sort=-v:refname | head -n 1 || echo "")
           CHANGELOG=""
