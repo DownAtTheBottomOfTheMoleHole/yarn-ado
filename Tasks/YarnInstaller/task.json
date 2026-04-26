@@ -2,13 +2,10 @@
   "id": "#{taskYarnInstallerId}#",
   "name": "#{taskYarnInstallerName}#",
   "friendlyName": "Yarn Tool Installer",
-  "description": "Installs Yarn Classic directly or activates Yarn 2+ with Corepack",
-  "helpMarkDown": "[Documentation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#quick-start) (Version #{Version}#).\n\nRequests for Yarn Classic use official releases from yarnpkg/yarn. Requests for Yarn 2+ and later are provisioned through Corepack on your behalf.",
+  "description": "Installs modern Yarn through Corepack by default, or Yarn Classic on request",
+  "helpMarkDown": "[Documentation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado#quick-start) (Version #{Version}#).\n\nBy default this task provisions the latest stable modern Yarn release through Corepack. Requests for Yarn Classic 1.x use official releases from yarnpkg/yarn.",
   "category": "Utility",
-  "visibility": [
-    "Build",
-    "Release"
-  ],
+  "visibility": ["Build", "Release"],
   "author": "#{author}#",
   "version": {
     "Major": "#{taskVersionMajor}#",
@@ -17,18 +14,16 @@
   },
   "minimumAgentVersion": "2.117.0",
   "groups": [],
-  "satisfies": [
-    "yarn"
-  ],
+  "satisfies": ["yarn"],
   "instanceNameFormat": "Use Yarn $(versionSpec)",
   "inputs": [
     {
       "name": "versionSpec",
       "type": "string",
       "label": "Version of Yarn to install",
-      "defaultValue": "1.x",
+      "defaultValue": "stable",
       "required": true,
-      "helpMarkDown": "A version or version range that specifies the Yarn version to make available on the path. Requests for Yarn 1.x use official Yarn Classic releases. Requests for Yarn 2+ and later are resolved through Corepack. Use x as a wildcard. See the [list of available Yarn Classic releases](https://github.com/yarnpkg/yarn/releases)."
+      "helpMarkDown": "A version or version range that specifies the Yarn version to make available on the path. The default `stable` value activates the latest stable modern Yarn release through Corepack. Requests for Yarn 1.x use official Yarn Classic releases. Use x as a wildcard. See the [list of available Yarn Classic releases](https://github.com/yarnpkg/yarn/releases)."
     },
     {
       "name": "checkLatest",

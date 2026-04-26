@@ -1,12 +1,12 @@
 # yarn-ado
 
-Run Yarn Classic and modern Yarn 2+ workflows in Azure DevOps pipelines.
+Run modern Yarn and Yarn Classic workflows in Azure DevOps pipelines.
 
 This extension is maintained as an independent hard fork of the original Geek Learning task set. The goal of the fork is to keep Yarn relevant in current Azure DevOps environments for both Yarn Classic and Yarn 2+ and later.
 
 ## Included Tasks
 
-- **YarnInstaller**: installs official Yarn Classic releases or activates Yarn 2+ through Corepack on the agent
+- **YarnInstaller**: installs the latest stable modern Yarn through Corepack by default, or Yarn Classic on request
 - **Yarn**: runs Yarn commands and supports authenticated registries
 
 ## Quick Start
@@ -14,9 +14,9 @@ This extension is maintained as an independent hard fork of the original Geek Le
 ```yaml
 steps:
   - task: YarnInstaller@1
-    displayName: Use Yarn Classic 1.x
+    displayName: Use latest stable Yarn
     inputs:
-      versionSpec: 1.x
+      versionSpec: stable
 
   - task: Yarn@1
     displayName: Install dependencies
@@ -24,7 +24,7 @@ steps:
       arguments: install --frozen-lockfile
 ```
 
-For Yarn 2+ and later, request the target version in `YarnInstaller@1` and the task will enable Corepack and activate that Yarn release for you.
+By default, `YarnInstaller@1` enables Corepack and activates the latest stable Yarn release for you. Request `1.x` explicitly if you need Yarn Classic, or specify a concrete modern version such as `4.x` when you want to pin it.
 
 The intended approach for Yarn 2+ and later is to let `YarnInstaller@1` prepare the requested version, then use `Yarn@1` as the pipeline execution wrapper.
 
