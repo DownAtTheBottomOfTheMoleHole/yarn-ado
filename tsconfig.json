@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
-    "module": "Node16",
-    "moduleResolution": "Node16",
-    "ignoreDeprecations": "6.0",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "strictNullChecks": false,
     "useUnknownInCatchVariables": false,
     "types": ["node", "jasmine"],

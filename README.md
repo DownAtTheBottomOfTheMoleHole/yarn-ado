@@ -3,7 +3,7 @@
 [![Visual Studio Marketplace](https://img.shields.io/badge/Marketplace-yarn--ado-blue?logo=azuredevops)](https://marketplace.visualstudio.com/items?itemName=DownAtTheBottomOfTheMoleHole.yarn-ado)
 [![PR Code Validation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/actions/workflows/pr-code-validation.yml/badge.svg)](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/actions/workflows/pr-code-validation.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24-green)](https://nodejs.org/)
 
 Azure DevOps extension for modern Yarn and Yarn Classic workflows in Azure Pipelines.
@@ -83,10 +83,10 @@ Registry and authentication options are available directly in the task UI:
 
 ## Included Tasks
 
-| Task            | Purpose                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------------------- |
-| `YarnInstaller` | Installs official Yarn Classic releases or activates Yarn 2+ through Corepack and adds Yarn to the agent PATH |
-| `Yarn`          | Runs Yarn commands and can inject credentials for Azure Artifacts or external npm registries                  |
+| Task            | Purpose                                                                                                   |
+| --------------- | --------------------------------------------------------------------------------------------------------- |
+| `YarnInstaller` | Installs modern Yarn via Corepack (stable by default) or Yarn Classic on request; adds Yarn to agent PATH |
+| `Yarn`          | Runs Yarn commands and can inject credentials for Azure Artifacts or external npm registries              |
 
 ## Compatibility
 
