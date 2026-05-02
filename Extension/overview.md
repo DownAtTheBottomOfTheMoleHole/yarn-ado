@@ -1,5 +1,9 @@
 # yarn-ado
 
+![Down At The Bottom Of The Mole Hole banner](Screenshots/org-banner.png)
+
+![Down At The Bottom Of The Mole Hole icon](extension-icon.png)
+
 Run modern Yarn and Yarn Classic workflows in Azure DevOps pipelines.
 
 This extension is maintained as an independent hard fork of the original Geek Learning task set. The goal of the fork is to keep Yarn relevant in current Azure DevOps environments for both Yarn Classic and Yarn 2+ and later.
