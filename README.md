@@ -2,8 +2,6 @@
 
 ![Down At The Bottom Of The Mole Hole banner](Extension/Screenshots/org-banner.png)
 
-![Down At The Bottom Of The Mole Hole icon](Extension/extension-icon.png)
-
 [![Visual Studio Marketplace](https://img.shields.io/badge/Marketplace-yarn--ado-blue?logo=azuredevops)](https://marketplace.visualstudio.com/items?itemName=DownAtTheBottomOfTheMoleHole.yarn-ado)
 [![PR Code Validation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/actions/workflows/pr-code-validation.yml/badge.svg)](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/actions/workflows/pr-code-validation.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
