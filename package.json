@@ -73,6 +73,6 @@
     "ltx": "^3.1.2",
     "q": "^2.0.3",
     "tar": "^7.5.13",
-    "typed-rest-client": "^3.0.0"
+    "typed-rest-client": "^3.1.0"
   }
 }
