@@ -60,7 +60,7 @@
     "typescript": "^7.0.0",
     "jasmine-reporters": "^2.5.2",
     "jasmine": "^6.2.0",
-    "tfx-cli": "^0.23.1"
+    "tfx-cli": "^0.24.0"
   },
   "dependencies": {
     "azure-devops-node-api": "^16.0.0",
