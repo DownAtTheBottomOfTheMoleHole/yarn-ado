@@ -91,6 +91,29 @@
         "/mega-linter/",
         "/prettier/"
       ]
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "Group Azure DevOps task-library updates",
+      "matchPackageNames": ["azure-pipelines-task-lib", "azure-pipelines-tool-lib", "typed-rest-client"],
+      "groupName": "Azure DevOps task libraries",
+      "automerge": false
+    },
+    {
+      "description": "Group TypeScript tooling updates for compatibility review",
+      "matchPackageNames": ["typescript", "typescript-eslint", "@typescript-eslint/eslint-plugin", "@typescript-eslint/parser", "@types/node"],
+      "groupName": "TypeScript tooling",
+      "automerge": false
+    },
+    {
+      "description": "Group linting and test-tool updates",
+      "matchPackageNames": ["eslint", "@eslint/js", "prettier", "@cucumber/cucumber", "nyc", "ts-node"],
+      "groupName": "linting and testing tools",
+      "automerge": false
     }
   ],
   "prCreation": "immediate",
