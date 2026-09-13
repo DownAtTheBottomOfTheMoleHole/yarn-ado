@@ -8,10 +8,24 @@
   "commitBodyTable": true,
   "configMigration": true,
   "extends": [
-    "config:recommended"
+    "config:recommended",
+    ":enableVulnerabilityAlerts",
+    "helpers:pinGitHubActionDigests"
   ],
   "gitAuthor": "DATBOTMH Renovate <renovate@DATBOTMH.com>",
   "packageRules": [
+    {
+      "description": "Require review for TypeScript compatibility changes",
+      "matchPackageNames": [
+        "typescript",
+        "typescript-eslint",
+        "@typescript-eslint/eslint-plugin",
+        "@typescript-eslint/parser"
+      ],
+      "matchUpdateTypes": ["minor", "major"],
+      "automerge": false,
+      "addLabels": ["TypeScript compatibility"]
+    },
     {
       "addLabels": [
         "Semver Patch",
@@ -80,9 +94,16 @@
     }
   ],
   "prCreation": "immediate",
-  "prHourlyLimit": 0,
+  "prConcurrentLimit": 2,
+  "prHourlyLimit": 1,
   "separateMajorMinor": true,
   "separateMultipleMajor": true,
   "timezone": "GB",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "prConcurrentLimit": 1,
+    "labels": ["security", "renovate"],
+    "automerge": false
+  },
   "useBaseBranchConfig": "merge"
 }
