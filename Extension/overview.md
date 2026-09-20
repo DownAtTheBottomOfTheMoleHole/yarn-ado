@@ -1,6 +1,10 @@
 # yarn-ado
 
-![Down At The Bottom Of The Mole Hole banner](Screenshots/org-banner.png)
+<p align="center">
+  <a href="https://github.com/DownAtTheBottomOfTheMoleHole">
+    <img src="https://raw.githubusercontent.com/DownAtTheBottomOfTheMoleHole/.github/main/assets/banners/repositories/yarn-ado.png" alt="Down At The Bottom Of The Mole Hole banner">
+  </a>
+</p>
 
 Run modern Yarn and Yarn Classic workflows in Azure DevOps pipelines.
 
