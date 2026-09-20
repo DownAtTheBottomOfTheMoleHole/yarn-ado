@@ -1,6 +1,10 @@
 # yarn-ado
 
-![Down At The Bottom Of The Mole Hole banner](Extension/Screenshots/org-banner.png)
+<p align="center">
+  <a href="https://github.com/DownAtTheBottomOfTheMoleHole">
+    <img src="https://raw.githubusercontent.com/DownAtTheBottomOfTheMoleHole/.github/main/assets/banners/repositories/yarn-ado.png" alt="Down At The Bottom Of The Mole Hole banner">
+  </a>
+</p>
 
 [![Visual Studio Marketplace](https://img.shields.io/badge/Marketplace-yarn--ado-blue?logo=azuredevops)](https://marketplace.visualstudio.com/items?itemName=DownAtTheBottomOfTheMoleHole.yarn-ado)
 [![PR Code Validation](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/actions/workflows/pr-code-validation.yml/badge.svg)](https://github.com/DownAtTheBottomOfTheMoleHole/yarn-ado/actions/workflows/pr-code-validation.yml)
