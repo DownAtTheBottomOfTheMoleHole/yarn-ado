@@ -60,7 +60,7 @@
     "prettier": "^3.8.3",
     "pretty-quick": "^4.2.2",
     "tfx-cli": "^0.24.0",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "dependencies": {
     "azure-devops-node-api": "^17.0.0",
